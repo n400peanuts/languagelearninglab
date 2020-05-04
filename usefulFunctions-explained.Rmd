@@ -2,8 +2,6 @@
 title: "Functions frequently used"
 ---
 
-# Functions frequently used
-
 This is an R Markdown document explaining all the functions used by the language and learning lab. 
 The functions are stored into the */tools* folder.
 
