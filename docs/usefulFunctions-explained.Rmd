@@ -6,20 +6,36 @@ title: "Functions frequently used"
 knitr::opts_chunk$set(echo = TRUE)
 ```
 
-## R Markdown
+This is an R Markdown document explaining all the functions used by the language and learning lab. 
+The functions are stored into the */tools* folder.
 
-This is an R Markdown document containing all the functions used by the language and learning lab. 
+## myCenter
 
-```{r cars}
-summary(cars)
+This function outputs the centered values of a variable, which can be a numeric variable, a factor, or a data frame. It was taken from Florian Jaegers blog https://hlplab.wordpress.com/2009/04/27/centering-several-variables/.
+
+From his blog:
+-If the input is a numeric variable, the output is the centered variable.
+-If the input is a factor, the output is a numeric variable with centered factor level values. That is, the factor's levels are converted into numerical values in their inherent order (if not specified otherwise,  R defaults to alphanumerical order). More specifically, this centers any binary factor so that the value below 0 will be the 1st level of the original factor, and the value above 0 will be the 2nd level.
+-If the input is a data frame or matrix, the output is a new matrix of the same dimension and with the centered values and column names that correspond to the colnames() of the input preceded by "c" (e.g. "Variable1" will be "cVariable1").
+
+```{r myCenter,message=FALSE, warning=FALSE}
+
+myCenter <- function(x) {
+  if (is.numeric(x)) { return(x - mean(x, na.rm=T)) }
+	if (is.factor(x)) {
+		x= as.numeric(x)
+		return(x - mean(x, na.rm=T))
+	}
+	if (is.data.frame(x) || is.matrix(x)) {
+		m= matrix(nrow=nrow(x), ncol=ncol(x))
+		colnames(m)= paste("c", colnames(x), sep="")
+	
+		for (i in 1:ncol(x)) {
+		
+			m[,i]= myCenter(x[,i])
+		}
+		return(as.data.frame(m))
+	}
+}
 ```
 
-## Including Plots
-
-You can also embed plots, for example:
-
-```{r pressure, echo=FALSE}
-plot(pressure)
-```
-
-Note that the `echo = FALSE` parameter was added to the code chunk to prevent printing of the R code that generated the plot.

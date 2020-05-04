@@ -294,23 +294,28 @@ $(document).ready(function () {
 </div>
 
 
-<div id="r-markdown" class="section level2">
-<h2>R Markdown</h2>
-<p>This is an R Markdown document containing all the functions used by the language and learning lab.</p>
-<pre class="r"><code>summary(cars)</code></pre>
-<pre><code>##      speed           dist       
-##  Min.   : 4.0   Min.   :  2.00  
-##  1st Qu.:12.0   1st Qu.: 26.00  
-##  Median :15.0   Median : 36.00  
-##  Mean   :15.4   Mean   : 42.98  
-##  3rd Qu.:19.0   3rd Qu.: 56.00  
-##  Max.   :25.0   Max.   :120.00</code></pre>
-</div>
-<div id="including-plots" class="section level2">
-<h2>Including Plots</h2>
-<p>You can also embed plots, for example:</p>
-<p><img src="usefulFunctions-explained_files/figure-html/pressure-1.png" width="672" /></p>
-<p>Note that the <code>echo = FALSE</code> parameter was added to the code chunk to prevent printing of the R code that generated the plot.</p>
+<p>This is an R Markdown document explaining all the functions used by the language and learning lab. The functions are stored into the <em>/tools</em> folder.</p>
+<div id="mycenter" class="section level2">
+<h2>myCenter</h2>
+<p>This function outputs the centered values of a variable, which can be a numeric variable, a factor, or a data frame. It was taken from Florian Jaegers blog <a href="https://hlplab.wordpress.com/2009/04/27/centering-several-variables/" class="uri">https://hlplab.wordpress.com/2009/04/27/centering-several-variables/</a>.</p>
+<p>From his blog: -If the input is a numeric variable, the output is the centered variable. -If the input is a factor, the output is a numeric variable with centered factor level values. That is, the factor’s levels are converted into numerical values in their inherent order (if not specified otherwise, R defaults to alphanumerical order). More specifically, this centers any binary factor so that the value below 0 will be the 1st level of the original factor, and the value above 0 will be the 2nd level. -If the input is a data frame or matrix, the output is a new matrix of the same dimension and with the centered values and column names that correspond to the colnames() of the input preceded by “c” (e.g. “Variable1” will be “cVariable1”).</p>
+<pre class="r"><code>myCenter &lt;- function(x) {
+  if (is.numeric(x)) { return(x - mean(x, na.rm=T)) }
+    if (is.factor(x)) {
+        x= as.numeric(x)
+        return(x - mean(x, na.rm=T))
+    }
+    if (is.data.frame(x) || is.matrix(x)) {
+        m= matrix(nrow=nrow(x), ncol=ncol(x))
+        colnames(m)= paste(&quot;c&quot;, colnames(x), sep=&quot;&quot;)
+    
+        for (i in 1:ncol(x)) {
+        
+            m[,i]= myCenter(x[,i])
+        }
+        return(as.data.frame(m))
+    }
+}</code></pre>
 </div>
 
 
