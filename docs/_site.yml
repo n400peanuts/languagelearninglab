@@ -5,5 +5,5 @@ navbar:
   left:
     - text: "Home"
       href: index.html
-    - text: "Speed and Distance"
-      href: speed-and-distance.html
+    - text: "Functions frequently used"
+      href: usefulFunctions-explained.html
