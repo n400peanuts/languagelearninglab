@@ -7,3 +7,8 @@ navbar:
       href: index.html
     - text: "Functions"
       href: usefulFunctions-explained.html
+output:
+  html_document:
+    theme: cosmo
+    highlight: textmate
+    css: styles.css
