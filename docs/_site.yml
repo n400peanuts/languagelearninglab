@@ -1,7 +1,7 @@
 name: "Functions frequently used"
 output_dir: "docs"
 navbar:
-  title: "Functions"
+  title: "Language learning lab"
   left:
     - text: "Home"
       href: index.html
