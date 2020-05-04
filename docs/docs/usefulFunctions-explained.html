@@ -319,6 +319,132 @@ $(document).ready(function () {
     }
 }</code></pre>
 </div>
+<div id="lizcenter" class="section level2">
+<h2>lizCenter</h2>
+<p>This function provides a wrapper around myCenter allowing to center a specific list of variables from a dataframe. The input is a dataframe (x) and a list of the names of the variables which you wish to center (listfname). The output is a copy of the dataframe with a column (numeric) added for each of the centered variables with each one labelled with it’s previous name with “.ct” appended. For example, if x is a dataframe with columns “a” and “b” lizCenter(x, list(“a”, “b”)) will return a dataframe with two additional columns, a.ct and b.ct, which are numeric, centered codings of the corresponding variables.</p>
+<pre class="r"><code>lizCenter= function(x, listfname) 
+{
+    for (i in 1:length(listfname)) 
+    {
+        fname = as.character(listfname[i])
+        x[paste(fname,&quot;.ct&quot;, sep=&quot;&quot;)] = myCenter(x[fname])
+    }
+        
+    return(x)
+}</code></pre>
+</div>
+<div id="bayesfactor" class="section level2">
+<h2>BayesFactor</h2>
+<p>This function is equivalent to the Dienes (2008) calculator which can be found here: <a href="http://www.lifesci.sussex.ac.uk/home/Zoltan_Dienes/inference/Bayes.htm" class="uri">http://www.lifesci.sussex.ac.uk/home/Zoltan_Dienes/inference/Bayes.htm</a>.</p>
+<p>The code was provided by Baguely and Kayne (2010) and can be found here: <a href="http://www.academia.edu/427288/Review_of_Understanding_psychology_as_a_science_An_introduction_to_scientific_and_statistical_inference" class="uri">http://www.academia.edu/427288/Review_of_Understanding_psychology_as_a_science_An_introduction_to_scientific_and_statistical_inference</a></p>
+<pre class="r"><code>Bf&lt;-function(sd, obtained, uniform, lower=0, upper=1, meanoftheory=0,sdtheory=1, tail=1){
+  area &lt;- 0
+  if(identical(uniform, 1)){
+    theta &lt;- lower
+    range &lt;- upper - lower
+    incr &lt;- range / 2000
+    for (A in -1000:1000){
+      theta &lt;- theta + incr
+      dist_theta &lt;- 1 / range
+      height &lt;- dist_theta * dnorm(obtained, theta, sd)
+      area &lt;- area + height * incr
+    }
+  }else
+  {theta &lt;- meanoftheory - 5 * sdtheory
+  incr &lt;- sdtheory / 200
+  for (A in -1000:1000){
+    theta &lt;- theta + incr
+    dist_theta &lt;- dnorm(theta, meanoftheory, sdtheory)
+    if(identical(tail, 1)){
+      if (theta &lt;= 0){
+        dist_theta &lt;- 0
+      } else {
+        dist_theta &lt;- dist_theta * 2
+      }
+    }
+    height &lt;- dist_theta * dnorm(obtained, theta, sd)
+    area &lt;- area + height * incr
+  }
+  }
+  LikelihoodTheory &lt;- area
+  Likelihoodnull &lt;- dnorm(obtained, 0, sd)
+  BayesFactor &lt;- LikelihoodTheory / Likelihoodnull
+  ret &lt;- list(&quot;LikelihoodTheory&quot; = LikelihoodTheory,&quot;Likelihoodnull&quot; = Likelihoodnull, &quot;BayesFactor&quot; = BayesFactor)
+  ret
+} </code></pre>
+</div>
+<div id="bayesfactor-updated" class="section level2">
+<h2>BayesFactor <em>updated</em></h2>
+<p>The BF function has been updated recently. The novel function has options for a likelihood that is either normal- or t-distributed, and a model of H1 that is either uniform, or normal or t- (or Cauchy-) distributed, with the normal/t/cauchy models being 1- or 2-tailed. In addition, the 1-tailed models are compatible with any mode (unlike the Dienes, 2008, calculator that assumed that 1-tailed models had a mode of zero). Reference page: <a href="http://www.lifesci.sussex.ac.uk/home/Zoltan_Dienes/inference/Bence%20Bayes%20factor%20calculator.html" class="uri">http://www.lifesci.sussex.ac.uk/home/Zoltan_Dienes/inference/Bence%20Bayes%20factor%20calculator.html</a></p>
+<pre class="r"><code>BfUpdated&lt;-function(sd, obtained, dfdata = 1, likelihood = c(&quot;normal&quot;, &quot;t&quot;), 
+                    modeloftheory= c(&quot;normal&quot;,&quot;t&quot;,&quot;cauchy&quot;, &quot;uniform&quot;) ,lower =0, 
+                    upper=1, modeoftheory = 0, scaleoftheory = 1, dftheory = 1, tail = 2)
+{
+  if(likelihood==&quot;normal&quot;){
+    dfdata=10^10
+  }
+  if(modeloftheory==&quot;normal&quot;){
+    dftheory = 10^10
+  } else if(modeloftheory==&quot;cauchy&quot;){
+    dftheory = 1
+  }
+  area &lt;- 0
+  normarea &lt;- 0
+  if(modeloftheory==&quot;uniform&quot;){
+    theta &lt;- lower
+    range &lt;- upper - lower
+    incr &lt;- range / 2000
+    for (A in -1000:1000){
+      theta &lt;- theta + incr
+      dist_theta &lt;- 1 / range
+      height &lt;- dist_theta * dt((obtained-theta)/sd, df=dfdata)
+      area &lt;- area + height * incr
+    }
+    LikelihoodTheory &lt;- area
+  }else{
+    theta &lt;- modeoftheory - 10 * scaleoftheory
+    incr &lt;- scaleoftheory/200
+    for (A in -2000:2000){
+      theta &lt;- theta + incr
+      dist_theta &lt;- dt((theta-modeoftheory)/scaleoftheory, df=dftheory)
+      if(identical(tail, 1)){
+        if (theta &lt;= modeoftheory){
+          dist_theta &lt;- 0
+        } else {
+          dist_theta &lt;- dist_theta * 2
+        }
+      }
+      height &lt;- dist_theta * dt((obtained-theta)/sd, df = dfdata)
+      area &lt;- area + height * incr
+      normarea &lt;- normarea + dist_theta*incr
+    }
+    LikelihoodTheory &lt;- area/normarea
+  }
+  Likelihoodnull &lt;- dt(obtained/sd, df = dfdata)
+  BayesFactor &lt;- LikelihoodTheory/Likelihoodnull
+  BayesFactor
+}</code></pre>
+</div>
+<div id="bf_powercalc" class="section level2">
+<h2>Bf_powercalc</h2>
+<pre class="r"><code>Bf_powercalc&lt;-function(sd, obtained, uniform, lower=0, upper=1, meanoftheory=0, sdtheory=1, tail=1, N, min, max)
+{
+  
+  x = c(0)
+  y = c(0)
+  # note: working out what the difference between N and df is (for the contrast between two groups, this is 2; for constraints where there is 4 groups this will be 3, etc.)  
+  for(newN in min : max)
+  {
+    B = as.numeric(Bf(sd = sd*sqrt(N/newN), obtained, uniform, lower, upper, meanoftheory, sdtheory, tail)[3])
+    x= append(x,newN)  
+    y= append(y,B)
+    output = cbind(x,y)
+    
+  } 
+  output = output[-1,] 
+  return(output) 
+}</code></pre>
+</div>
 </div>
 
 
