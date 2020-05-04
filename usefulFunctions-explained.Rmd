@@ -3,7 +3,7 @@ title: "Functions frequently used"
 ---
 
 This is an R Markdown document explaining all the functions used by the language and learning lab. 
-The functions are stored into the */tools* folder.
+The functions are stored into the *https://github.com/n400peanuts/languagelearninglab/docs/tools* folder. 
 
 ## myCenter
 
