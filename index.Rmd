@@ -1,8 +1,5 @@
 ---
-title: "intro of the website"
-author: "Eva"
-date: "5/4/2020"
-output: html_document
+title: "Language learning lab"
 ---
 
 # Language learning lab Github repository 
