@@ -19,6 +19,9 @@
 <script src="site_libs/bootstrap-3.3.5/js/bootstrap.min.js"></script>
 <script src="site_libs/bootstrap-3.3.5/shim/html5shiv.min.js"></script>
 <script src="site_libs/bootstrap-3.3.5/shim/respond.min.js"></script>
+<script src="site_libs/jqueryui-1.11.4/jquery-ui.min.js"></script>
+<link href="site_libs/tocify-1.9.1/jquery.tocify.css" rel="stylesheet" />
+<script src="site_libs/tocify-1.9.1/jquery.tocify.js"></script>
 <script src="site_libs/navigation-1.1/tabsets.js"></script>
 <link href="site_libs/highlightjs-9.12.0/textmate.css" rel="stylesheet" />
 <script src="site_libs/highlightjs-9.12.0/highlight.js"></script>
@@ -248,6 +251,69 @@ $(document).ready(function () {
 
 
 
+<style type="text/css">
+
+#TOC {
+  margin: 25px 0px 20px 0px;
+}
+@media (max-width: 768px) {
+#TOC {
+  position: relative;
+  width: 100%;
+}
+}
+
+@media print {
+.toc-content {
+  /* see https://github.com/w3c/csswg-drafts/issues/4434 */
+  float: right;
+}
+}
+
+.toc-content {
+  padding-left: 30px;
+  padding-right: 40px;
+}
+
+div.main-container {
+  max-width: 1200px;
+}
+
+div.tocify {
+  width: 20%;
+  max-width: 260px;
+  max-height: 85%;
+}
+
+@media (min-width: 768px) and (max-width: 991px) {
+  div.tocify {
+    width: 25%;
+  }
+}
+
+@media (max-width: 767px) {
+  div.tocify {
+    width: 100%;
+    max-width: none;
+  }
+}
+
+.tocify ul, .tocify li {
+  line-height: 20px;
+}
+
+.tocify-subheader .tocify-item {
+  font-size: 0.90em;
+}
+
+.tocify .list-group-item {
+  border-radius: 0px;
+}
+
+
+</style>
+
+
 
 </head>
 
@@ -255,6 +321,16 @@ $(document).ready(function () {
 
 
 <div class="container-fluid main-container">
+
+
+<!-- setup 3col/9col grid for toc_float and main content  -->
+<div class="row-fluid">
+<div class="col-xs-12 col-sm-4 col-md-3">
+<div id="TOC" class="tocify">
+</div>
+</div>
+
+<div class="toc-content col-xs-12 col-sm-8 col-md-9">
 
 
 
@@ -294,10 +370,11 @@ $(document).ready(function () {
 </div>
 
 
-<p>This is an R Markdown document explaining all the functions used by the language and learning lab. The functions are stored into the <em><a href="https://github.com/n400peanuts/languagelearninglab/docs/tools" class="uri">https://github.com/n400peanuts/languagelearninglab/docs/tools</a></em> folder.</p>
-<div id="load-the-functions-automatically-from-github" class="section level2">
-<h2>Load the functions automatically from Github</h2>
-<p>This function loads all the functions stored in the <em>/tools</em> folder. It requires two arguments, urlFolder that is the url of the github at the master tree level, and the urlRaw, that is the raw address of the folder.</p>
+<p>This is an R Markdown document explaining all the functions used by the language and learning lab. The functions are stored into the <a href="https://github.com/n400peanuts/languagelearninglab/docs/tools">tools</a> folder.</p>
+<div id="loadfunctionsgithub" class="section level2">
+<h2>loadFunctionsGithub</h2>
+<p>Author: Eva Viviani.</p>
+<p>This function loads automatically all the functions stored in the <em>/tools</em> folder. It requires two arguments, urlFolder that is the url of the github at the master tree level, and the urlRaw, that is the raw address of the folder.</p>
 <p>In the case of the languagelearninglab repository, these two arguments are the following:</p>
 <pre class="r"><code>urlFolder &lt;- &#39;https://api.github.com/repos/n400peanuts/languagelearninglab/git/trees/master?recursive=1&#39;
 urlRaw &lt;- &#39;https://raw.githubusercontent.com/n400peanuts/languagelearninglab/master/tools/&#39;</code></pre>
@@ -324,8 +401,14 @@ urlRaw &lt;- &#39;https://raw.githubusercontent.com/n400peanuts/languagelearning
 </div>
 <div id="mycenter" class="section level2">
 <h2>myCenter</h2>
-<p>This function outputs the centered values of a variable, which can be a numeric variable, a factor, or a data frame. It was taken from Florian Jaegers blog <a href="https://hlplab.wordpress.com/2009/04/27/centering-several-variables/" class="uri">https://hlplab.wordpress.com/2009/04/27/centering-several-variables/</a>.</p>
-<p>From his blog: -If the input is a numeric variable, the output is the centered variable. -If the input is a factor, the output is a numeric variable with centered factor level values. That is, the factor’s levels are converted into numerical values in their inherent order (if not specified otherwise, R defaults to alphanumerical order). More specifically, this centers any binary factor so that the value below 0 will be the 1st level of the original factor, and the value above 0 will be the 2nd level. -If the input is a data frame or matrix, the output is a new matrix of the same dimension and with the centered values and column names that correspond to the colnames() of the input preceded by “c” (e.g. “Variable1” will be “cVariable1”).</p>
+<p>Author: <a href="https://hlplab.wordpress.com/2009/04/27/centering-several-variables/">Florian Jaegers</a>.</p>
+<p>This function outputs the centered values of a variable, which can be a numeric variable, a factor, or a data frame.</p>
+<p>From Florian’s blog:</p>
+<ul>
+<li><p>If the input is a numeric variable, the output is the centered variable.</p></li>
+<li><p>If the input is a factor, the output is a numeric variable with centered factor level values. That is, the factor’s levels are converted into numerical values in their inherent order (if not specified otherwise, R defaults to alphanumerical order). More specifically, this centers any binary factor so that the value below 0 will be the 1st level of the original factor, and the value above 0 will be the 2nd level.</p></li>
+<li><p>If the input is a data frame or matrix, the output is a new matrix of the same dimension and with the centered values and column names that correspond to the colnames() of the input preceded by “c” (e.g. “Variable1” will be “cVariable1”).</p></li>
+</ul>
 <pre class="r"><code>myCenter &lt;- function(x) {
   if (is.numeric(x)) { return(x - mean(x, na.rm=T)) }
     if (is.factor(x)) {
@@ -346,6 +429,7 @@ urlRaw &lt;- &#39;https://raw.githubusercontent.com/n400peanuts/languagelearning
 </div>
 <div id="lizcenter" class="section level2">
 <h2>lizCenter</h2>
+<p>Author: Elizabeth Wonnacott.</p>
 <p>This function provides a wrapper around myCenter allowing to center a specific list of variables from a dataframe. The input is a dataframe (x) and a list of the names of the variables which you wish to center (listfname). The output is a copy of the dataframe with a column (numeric) added for each of the centered variables with each one labelled with it’s previous name with “.ct” appended. For example, if x is a dataframe with columns “a” and “b” lizCenter(x, list(“a”, “b”)) will return a dataframe with two additional columns, a.ct and b.ct, which are numeric, centered codings of the corresponding variables.</p>
 <pre class="r"><code>lizCenter= function(x, listfname) 
 {
@@ -360,8 +444,8 @@ urlRaw &lt;- &#39;https://raw.githubusercontent.com/n400peanuts/languagelearning
 </div>
 <div id="bayesfactor" class="section level2">
 <h2>BayesFactor</h2>
-<p>This function is equivalent to the Dienes (2008) calculator which can be found here: <a href="http://www.lifesci.sussex.ac.uk/home/Zoltan_Dienes/inference/Bayes.htm" class="uri">http://www.lifesci.sussex.ac.uk/home/Zoltan_Dienes/inference/Bayes.htm</a>.</p>
-<p>The code was provided by Baguely and Kayne (2010) and can be found here: <a href="http://www.academia.edu/427288/Review_of_Understanding_psychology_as_a_science_An_introduction_to_scientific_and_statistical_inference" class="uri">http://www.academia.edu/427288/Review_of_Understanding_psychology_as_a_science_An_introduction_to_scientific_and_statistical_inference</a></p>
+<p>Author: <a href="http://www.academia.edu/427288/Review_of_Understanding_psychology_as_a_science_An_introduction_to_scientific_and_statistical_inference">Baguely and Kayne (2010)</a>.</p>
+<p>This function is equivalent to the <a href="http://www.lifesci.sussex.ac.uk/home/Zoltan_Dienes/inference/Bayes.htm">Dienes (2008) calculator</a>.</p>
 <pre class="r"><code>Bf&lt;-function(sd, obtained, uniform, lower=0, upper=1, meanoftheory=0,sdtheory=1, tail=1){
   area &lt;- 0
   if(identical(uniform, 1)){
@@ -400,7 +484,8 @@ urlRaw &lt;- &#39;https://raw.githubusercontent.com/n400peanuts/languagelearning
 </div>
 <div id="bayesfactor-updated" class="section level2">
 <h2>BayesFactor <em>updated</em></h2>
-<p>The BF function has been updated recently. The novel function has options for a likelihood that is either normal- or t-distributed, and a model of H1 that is either uniform, or normal or t- (or Cauchy-) distributed, with the normal/t/cauchy models being 1- or 2-tailed. In addition, the 1-tailed models are compatible with any mode (unlike the Dienes, 2008, calculator that assumed that 1-tailed models had a mode of zero). Reference page: <a href="http://www.lifesci.sussex.ac.uk/home/Zoltan_Dienes/inference/Bence%20Bayes%20factor%20calculator.html" class="uri">http://www.lifesci.sussex.ac.uk/home/Zoltan_Dienes/inference/Bence%20Bayes%20factor%20calculator.html</a></p>
+<p>Author: <a href="http://www.lifesci.sussex.ac.uk/home/Zoltan_Dienes/inference/Bence%20Bayes%20factor%20calculator.html">Bence Palfi</a>.</p>
+<p>The BF function has been updated recently. The novel function has options for a likelihood that is either normal- or t-distributed, and a model of H1 that is either uniform, or normal or t- (or Cauchy-) distributed, with the normal/t/cauchy models being 1- or 2-tailed. In addition, the 1-tailed models are compatible with any mode (unlike the Dienes, 2008, calculator that assumed that 1-tailed models had a mode of zero).</p>
 <pre class="r"><code>BfUpdated&lt;-function(sd, obtained, dfdata = 1, likelihood = c(&quot;normal&quot;, &quot;t&quot;), 
                     modeloftheory= c(&quot;normal&quot;,&quot;t&quot;,&quot;cauchy&quot;, &quot;uniform&quot;) ,lower =0, 
                     upper=1, modeoftheory = 0, scaleoftheory = 1, dftheory = 1, tail = 2)
@@ -452,6 +537,8 @@ urlRaw &lt;- &#39;https://raw.githubusercontent.com/n400peanuts/languagelearning
 </div>
 <div id="bf_powercalc" class="section level2">
 <h2>Bf_powercalc</h2>
+<p>Author: Elizabeth Wonnacott.</p>
+<p>This works with the Bf function above. It requires the same values as that function (i.e. the obtained mean and SE for the current sample, a value for the predicted mean, which is set to be sdtheory (with meanoftheory=0), and the current number of participants N). However rather than return BF for current sample, it works out what the BF would be for a range of different subject numbers (assuming that the SE scales with sqrt(N)).</p>
 <pre class="r"><code>Bf_powercalc&lt;-function(sd, obtained, uniform, lower=0, upper=1, meanoftheory=0, sdtheory=1, tail=1, N, min, max)
 {
   
@@ -470,9 +557,292 @@ urlRaw &lt;- &#39;https://raw.githubusercontent.com/n400peanuts/languagelearning
   return(output) 
 }</code></pre>
 </div>
+<div id="bf_set" class="section level2">
+<h2>Bf_set</h2>
+<p>Bf_set is a wrapper around Bf which allows us to caculate a set of BFs and put them in a table. It can only be used with non-uniform method and each h1 must be positive (as for original calculator).</p>
+<pre class="r"><code>Bf_set &lt;-function(names_list, meandiff_list, sd_list,  h1_list, tail_list)
+{
+  Bfs = vector(&#39;double&#39;)
+   for (i in 1:length(meandiff_list)){
+    Bfs[i] = Bf(sd_list[i], meandiff_list[i], uniform = 0, meanoftheory = 0, sdtheory=h1_list[i] , tail = tail_list[i])$BayesFactor
+   
+  }
+  
+  df = data.frame(names_list, cbind(round(meandiff_list,3), round(sd_list,3),  h1_list, round(Bfs,3)))
+  colnames(df) = c(&quot;Contrast&quot;, &quot;Mean difference&quot;, &quot;SE&quot;, &quot;H1 estimate&quot;, &quot;BF&quot; )
+  return(df)
+  
+  kable(df)
+}</code></pre>
+</div>
+<div id="addbf_ranges" class="section level2">
+<h2>addBf_ranges</h2>
+<p>This function takes as its input a dataframe which is the output of the BF_set function. This will have a set of betas, standard errors and sd-theory. The function adds and additional column to this table which shows the range of values over which BF’s meet the criteria of (i) strong evdience for null (BF&lt; 1/10); substantial evidence for null (BF&lt; 1/3); ambiguous (3 &gt; BF &gt;1/3 ); substantial evidence H1 (BF &gt;= 10).</p>
+<pre class="r"><code>addBf_ranges &lt;-function(Bf_df, sdtheoryrange)
+{
+ 
+  BFranges = vector()  
+  for (b in 1:dim(Bf_df)[1]){
+      range = Bf_range(sd=as.numeric(as.character(Bf_df$SE[b])), obtained=as.numeric(as.character(Bf_df$&#39;Mean difference&#39;[b])), meanoftheory=0, sdtheoryrange=sdtheoryrange)
+    
+      from_table = vector()
+      to_table = vector()
+      cat = vector()
+      category_table = vector()
+
+      for(i in 1:dim(range)[1]) {       # go through each value in the range and categorize it
+
+        #categorize current BF 
+        if (range[i,2] &lt;= (1/3)) { 
+          cat[i] = &quot;H0&quot;      ## below or equal to 1/3
+        } else if (range[i,2] &lt; 3) { ## NOT below or equal to 1/3, IS below 3 
+          cat[i] = &quot;ambig&quot;
+        } else {                ## NOT below or equal to 1/3, NOT below 3
+          cat[i] = &quot;substH1&quot;
+        }
+        
+        # adjust the table
+        j = length(category_table) 
+        
+        if (i==1){                      # first one
+          category_table[j+1] = cat[i]   
+          from_table[j+1] = range[i,1]
+          
+        } else if (cat[i] != cat[i-1]) { # NOT the first one, IS one where need to start new range 
+          to_table[j] = range[i-1,1]
+          category_table[j+1] = cat[i]
+          from_table[j+1] = range[i,1]
+        } 
+        
+        if (i==dim(range)[1]){        # if its the last one, finish off the table
+          to_table[j] = range[i,1]
+        }
+      }
+
+      # go through the little table and turn it int a string of ranges  
+      string = &quot;&quot;
+      for(i in 1: length(category_table)){
+          string = paste(string, category_table[i],&quot;:&quot;, round(from_table[i],3),&quot;-&quot;, round(to_table[i],3))
+          }
+
+      BFranges[b] = string
+    }
+  out = cbind(Bf_df, BFranges)
+  return(out)
+}</code></pre>
+</div>
+<div id="logodds" class="section level2">
+<h2>logodds</h2>
+<p>This function takes a percentage p and returns the logodds value.</p>
+<pre class="r"><code>logodds &lt;- function(p){log(p/(100-p))} </code></pre>
+</div>
+<div id="percentage" class="section level2">
+<h2>percentage</h2>
+<p>This function does the reverse of the function above.</p>
+<pre class="r"><code>percentage &lt;- function(logodds) {(exp(logodds)/(1+exp(logodds)) ) * 100}</code></pre>
+</div>
+<div id="getmode" class="section level2">
+<h2>getmode</h2>
+<p>Author: <a href="https://www.tutorialspoint.com/r/r_mean_median_mode.htm">Tutorials point</a>.</p>
+<pre class="r"><code>getmode &lt;- function(v) {
+   uniqv &lt;- unique(v)
+   uniqv[which.max(tabulate(match(v, uniqv)))]
+}</code></pre>
+</div>
+<div id="summaryse" class="section level2">
+<h2>summarySE</h2>
+<p>Author: <a href="http://www.cookbook-r.com/Manipulating_data/Summarizing_data/">Cookbook for R</a>.</p>
+<p>It summarizes data, giving count, mean, standard deviation, standard error of the mean, and confidence interval (default 95%).</p>
+<ul>
+<li><p>data: a data frame</p></li>
+<li><p>measurevar: the name of a column that contains the variable to be summarized</p></li>
+<li><p>groupvars: a vector containing the names of the columns that contain grouping variables</p></li>
+<li><p>na.rm: a boolean that indicates whether to ignore NA’s</p></li>
+<li><p>conf.interval: the percent range of the confidence interval (default is 95%)</p></li>
+</ul>
+<pre class="r"><code>summarySE &lt;- function(data=NULL, measurevar, groupvars=NULL, na.rm=FALSE,
+                      conf.interval=.95, .drop=TRUE) {
+    require(plyr)
+
+    # New version of length which can handle NA&#39;s: if na.rm==T, don&#39;t count them
+    length2 &lt;- function (x, na.rm=FALSE) {
+        if (na.rm) sum(!is.na(x))
+        else       length(x)
+    }
+
+    # This does the summary. For each group&#39;s data frame, return a vector with
+    # N, mean, and sd
+    datac &lt;- ddply(data, groupvars, .drop=.drop,
+      .fun = function(xx, col) {
+        c(N    = length2(xx[[col]], na.rm=na.rm),
+          mean = mean   (xx[[col]], na.rm=na.rm),
+          sd   = sd     (xx[[col]], na.rm=na.rm)
+        )
+      },
+      measurevar
+    )
+
+    # Rename the &quot;mean&quot; column    
+    datac &lt;- rename(datac, c(&quot;mean&quot; = measurevar))
+
+    datac$se &lt;- datac$sd / sqrt(datac$N)  # Calculate standard error of the mean
+
+    # Confidence interval multiplier for standard error
+    # Calculate t-statistic for confidence interval: 
+    # e.g., if conf.interval is .95, use .975 (above/below), and use df=N-1
+    ciMult &lt;- qt(conf.interval/2 + .5, datac$N-1)
+    datac$ci &lt;- datac$se * ciMult
+
+    return(datac)
+}</code></pre>
+</div>
+<div id="summarysewithin" class="section level2">
+<h2>summarySEwithin</h2>
+<p>Author: <a href="http://www.cookbook-r.com/Graphs/Plotting_means_and_error_bars_(ggplot2)/#Helper">Cookbook for R</a>.</p>
+<p>From that website:</p>
+<p>Summarizes data, handling within-subjects variables by removing inter-subject variability. It will still work if there are no within-subjects variables. Gives count, un-normed mean, normed mean (with same between-group mean), standard deviation, standard error of the mean, and confidence interval. If there are within-subject variables, calculate adjusted values using method from Morey (2008).</p>
+<ul>
+<li><p>data: a data frame</p></li>
+<li><p>measurevar: the name of a column that contains the variable to be summarized</p></li>
+<li><p>betweenvars: a vector containing names of columns that are between-subjects variables</p></li>
+<li><p>withinvars: a vector containing names of columns that are within-subjects variables</p></li>
+<li><p>idvar: the name of a column that identifies each subject (or matched subjects)</p></li>
+<li><p>na.rm: a boolean that indicates whether to ignore NA’s</p></li>
+<li><p>conf.interval: the percent range of the confidence interval (default is 95%)</p></li>
+</ul>
+<pre class="r"><code>summarySEwithin &lt;- function(data=NULL, measurevar, betweenvars=NULL, withinvars=NULL,
+                            idvar=NULL, na.rm=FALSE, conf.interval=.95, .drop=TRUE) {
+
+  # Ensure that the betweenvars and withinvars are factors
+  factorvars &lt;- vapply(data[, c(betweenvars, withinvars), drop=FALSE],
+    FUN=is.factor, FUN.VALUE=logical(1))
+
+  if (!all(factorvars)) {
+    nonfactorvars &lt;- names(factorvars)[!factorvars]
+    message(&quot;Automatically converting the following non-factors to factors: &quot;,
+            paste(nonfactorvars, collapse = &quot;, &quot;))
+    data[nonfactorvars] &lt;- lapply(data[nonfactorvars], factor)
+  }
+
+  # Get the means from the un-normed data
+  datac &lt;- summarySE(data, measurevar, groupvars=c(betweenvars, withinvars),
+                     na.rm=na.rm, conf.interval=conf.interval, .drop=.drop)
+
+  # Drop all the unused columns (these will be calculated with normed data)
+  datac$sd &lt;- NULL
+  datac$se &lt;- NULL
+  datac$ci &lt;- NULL
+
+  # Norm each subject&#39;s data
+  ndata &lt;- normDataWithin(data, idvar, measurevar, betweenvars, na.rm, .drop=.drop)
+
+  # This is the name of the new column
+  measurevar_n &lt;- paste(measurevar, &quot;_norm&quot;, sep=&quot;&quot;)
+
+  # Collapse the normed data - now we can treat between and within vars the same
+  ndatac &lt;- summarySE(ndata, measurevar_n, groupvars=c(betweenvars, withinvars),
+                      na.rm=na.rm, conf.interval=conf.interval, .drop=.drop)
+
+  # Apply correction from Morey (2008) to the standard error and confidence interval
+  #  Get the product of the number of conditions of within-S variables
+  nWithinGroups    &lt;- prod(vapply(ndatac[,withinvars, drop=FALSE], FUN=nlevels,
+                           FUN.VALUE=numeric(1)))
+  correctionFactor &lt;- sqrt( nWithinGroups / (nWithinGroups-1) )
+
+  # Apply the correction factor
+  ndatac$sd &lt;- ndatac$sd * correctionFactor
+  ndatac$se &lt;- ndatac$se * correctionFactor
+  ndatac$ci &lt;- ndatac$ci * correctionFactor
+
+  # Combine the un-normed means with the normed results
+  merge(datac, ndatac)
+}</code></pre>
+</div>
+<div id="normdatawithin" class="section level2">
+<h2>normDataWithin</h2>
+<p>Author: <a href="http://www.cookbook-r.com/Graphs/Plotting_means_and_error_bars_(ggplot2)/#Helper">Cookbook for R</a>.</p>
+<p>This function is used by the SummarySEWithin function above. From that website:</p>
+<p>Norms the data within specified groups in a data frame; it normalizes each subject (identified by idvar) so that they have the same mean, within each group specified by betweenvars.</p>
+<ul>
+<li><p>data: a data frame</p></li>
+<li><p>idvar: the name of a column that identifies each subject (or matched subjects)</p></li>
+<li><p>measurevar: the name of a column that contains the variable to be summarized</p></li>
+<li><p>betweenvars: a vector containing names of columns that are between-subjects variables</p></li>
+<li><p>na.rm: a boolean that indicates whether to ignore NA’s</p></li>
+</ul>
+<pre class="r"><code>normDataWithin &lt;- function(data=NULL, idvar, measurevar, betweenvars=NULL,
+                           na.rm=FALSE, .drop=TRUE) {
+    #library(plyr)
+
+    # Measure var on left, idvar + between vars on right of formula.
+    data.subjMean &lt;- ddply(data, c(idvar, betweenvars), .drop=.drop,
+     .fun = function(xx, col, na.rm) {
+        c(subjMean = mean(xx[,col], na.rm=na.rm))
+      },
+      measurevar,
+      na.rm
+    )
+
+    # Put the subject means with original data
+    data &lt;- merge(data, data.subjMean)
+
+    # Get the normalized data in a new column
+    measureNormedVar &lt;- paste(measurevar, &quot;_norm&quot;, sep=&quot;&quot;)
+    data[,measureNormedVar] &lt;- data[,measurevar] - data[,&quot;subjMean&quot;] +
+                               mean(data[,measurevar], na.rm=na.rm)
+
+    # Remove this subject mean column
+    data$subjMean &lt;- NULL
+
+    return(data)
+}</code></pre>
+</div>
+<div id="get_coeffs" class="section level2">
+<h2>get_coeffs</h2>
+<p>This function allows us to inspect particular coefficients from the output of an LME model by putting them in table.</p>
+<ul>
+<li><p>x: the output returned when running lmer or glmer (i.e. an object of type lmerMod or glmerMod)</p></li>
+<li><p>list: a list of the names of the coefficients to be extracted (e.g. c(“variable1”, “variable1:variable2”))</p></li>
+</ul>
+<pre class="r"><code>get_coeffs &lt;- function(x,list){(as.data.frame(summary(x)$coefficients)[list,])}</code></pre>
+</div>
+<div id="lizcontrasts" class="section level2">
+<h2>lizContrasts</h2>
+<p>Author: Elizabeth Wonnacott.</p>
+<p>This function can be used to create two centered dummy variables which stand in place of a three way factor (condition). This allows us to inspect each contrast separately, as well as their interactions with other factors. Other fixed effects in the model can be evaluated as the average effects across all levels of the factor.</p>
+<p>The function takes a data frame (d), a factor from that database (condition), which must have three levels, and the name of the level of the factor which is to be used as the baseline for the contrasts (baselevel).</p>
+<pre class="r"><code>lizContrasts= function(d, condition, baselevel) 
+{
+ 
+    condition = factor(condition)
+ condition = relevel(condition, baselevel)
+
+    a= (contrasts(condition)-apply(contrasts(condition),2,mean))
+    d$dummy1[condition== rownames(a)[1]] &lt;- a[1] 
+    d$dummy1[condition== rownames(a)[2]] &lt;- a[2] 
+    d$dummy1[condition== rownames(a)[3]] &lt;- a[3] 
+    
+    d$dummy2[condition== rownames(a)[1]] &lt;- a[4] 
+    d$dummy2[condition== rownames(a)[2]] &lt;- a[5] 
+    d$dummy2[condition== rownames(a)[3]] &lt;- a[6] 
+
+    name1 = paste(baselevel, rownames(a)[2],sep=&quot;_VERSUS_&quot;)
+    name2 = paste(baselevel, rownames(a)[3],sep=&quot;_VERSUS_&quot;)
+
+    d[name1] = d$dummy1 
+    d[name2] = d$dummy2 
+
+    d$dummy1 &lt;-NULL 
+    d$dummy2 &lt;-NULL 
+    
+    return(d)
+}</code></pre>
+</div>
 
 
 
+</div>
+</div>
 
 </div>
 
@@ -505,6 +875,32 @@ $(document).ready(function () {
 
 <!-- code folding -->
 
+<script>
+$(document).ready(function ()  {
+
+    // move toc-ignore selectors from section div to header
+    $('div.section.toc-ignore')
+        .removeClass('toc-ignore')
+        .children('h1,h2,h3,h4,h5').addClass('toc-ignore');
+
+    // establish options
+    var options = {
+      selectors: "h1,h2,h3",
+      theme: "bootstrap3",
+      context: '.toc-content',
+      hashGenerator: function (text) {
+        return text.replace(/[.\\/?&!#<>]/g, '').replace(/\s/g, '_').toLowerCase();
+      },
+      ignoreSelector: ".toc-ignore",
+      scrollTo: 0
+    };
+    options.showAndHide = true;
+    options.smoothScroll = true;
+
+    // tocify
+    var toc = $("#TOC").tocify(options).data("toc-tocify");
+});
+</script>
 
 <!-- dynamically load mathjax for compatibility with self-contained -->
 <script>

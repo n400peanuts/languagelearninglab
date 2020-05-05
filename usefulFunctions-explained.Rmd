@@ -1,13 +1,22 @@
 ---
 title: "Functions frequently used"
+output:
+  html_document:
+    toc: true
+    toc_float: true
 ---
 
 This is an R Markdown document explaining all the functions used by the language and learning lab. 
-The functions are stored into the *https://github.com/n400peanuts/languagelearninglab/docs/tools* folder. 
+The functions are stored into the [tools](https://github.com/n400peanuts/languagelearninglab/docs/tools) folder. 
 
-## Load the functions automatically from Github
 
-This function loads all the functions stored in the */tools* folder. It requires two arguments, urlFolder that is the url of the github at the master tree level, and the urlRaw, that is the raw address of the folder.
+
+## loadFunctionsGithub 
+
+Author: Eva Viviani.
+
+This function loads automatically all the functions stored in the */tools* folder. It requires two arguments, urlFolder that is the url of the github at the master tree level, and the urlRaw, that is the raw address of the folder.
+
 
 In the case of the languagelearninglab repository, these two arguments are the following:
 ```{r}
@@ -40,13 +49,17 @@ loadFunctionsGithub <-function(urlFolder, urlRaw){
 
 
 ## myCenter
+Author: [Florian Jaegers](https://hlplab.wordpress.com/2009/04/27/centering-several-variables/).
 
-This function outputs the centered values of a variable, which can be a numeric variable, a factor, or a data frame. It was taken from Florian Jaegers blog https://hlplab.wordpress.com/2009/04/27/centering-several-variables/.
+This function outputs the centered values of a variable, which can be a numeric variable, a factor, or a data frame.
 
-From his blog:
--If the input is a numeric variable, the output is the centered variable.
--If the input is a factor, the output is a numeric variable with centered factor level values. That is, the factor's levels are converted into numerical values in their inherent order (if not specified otherwise,  R defaults to alphanumerical order). More specifically, this centers any binary factor so that the value below 0 will be the 1st level of the original factor, and the value above 0 will be the 2nd level.
--If the input is a data frame or matrix, the output is a new matrix of the same dimension and with the centered values and column names that correspond to the colnames() of the input preceded by "c" (e.g. "Variable1" will be "cVariable1").
+From Florian's blog:
+
+- If the input is a numeric variable, the output is the centered variable.
+
+- If the input is a factor, the output is a numeric variable with centered factor level values. That is, the factor's levels are converted into numerical values in their inherent order (if not specified otherwise,  R defaults to alphanumerical order). More specifically, this centers any binary factor so that the value below 0 will be the 1st level of the original factor, and the value above 0 will be the 2nd level.
+
+- If the input is a data frame or matrix, the output is a new matrix of the same dimension and with the centered values and column names that correspond to the colnames() of the input preceded by "c" (e.g. "Variable1" will be "cVariable1").
 
 ```{r myCenter,message=FALSE, warning=FALSE}
 
@@ -71,9 +84,13 @@ myCenter <- function(x) {
 
 ## lizCenter
 
-This function provides a wrapper around myCenter allowing to center a specific list of variables from a dataframe.
+Author: Elizabeth Wonnacott.
+
+This function provides a wrapper around myCenter allowing to center a specific list of variables from a dataframe. 
 The input is a dataframe (x) and a list of the names of the variables which you wish to center (listfname).
 The output is a copy of the dataframe with a column (numeric) added for each of the centered variables with each one labelled with it's previous name with ".ct" appended. For example, if x is a dataframe with columns "a" and "b" lizCenter(x, list("a", "b")) will return a dataframe with two additional columns, a.ct and b.ct, which are numeric, centered codings of the corresponding variables.
+
+
 
 ```{r lizCenter,message=FALSE, warning=FALSE}
 
@@ -91,9 +108,9 @@ lizCenter= function(x, listfname)
 
 ## BayesFactor
 
-This function is equivalent to the Dienes (2008) calculator which can be found here: http://www.lifesci.sussex.ac.uk/home/Zoltan_Dienes/inference/Bayes.htm.
+Author: [Baguely and Kayne (2010)](http://www.academia.edu/427288/Review_of_Understanding_psychology_as_a_science_An_introduction_to_scientific_and_statistical_inference).
 
-The code was provided by Baguely and Kayne (2010) and can be found here: http://www.academia.edu/427288/Review_of_Understanding_psychology_as_a_science_An_introduction_to_scientific_and_statistical_inference
+This function is equivalent to the [Dienes (2008) calculator](http://www.lifesci.sussex.ac.uk/home/Zoltan_Dienes/inference/Bayes.htm).
 
 ```{r BayesFactor, message=FALSE, warning=FALSE}
 
@@ -136,7 +153,9 @@ Bf<-function(sd, obtained, uniform, lower=0, upper=1, meanoftheory=0,sdtheory=1,
 
 ## BayesFactor *updated*
 
-The BF function has been updated recently. The novel function has options for a likelihood that is either normal- or t-distributed, and a model of H1 that is either uniform, or normal or t- (or Cauchy-) distributed, with the normal/t/cauchy models being 1- or 2-tailed. In addition, the 1-tailed models are compatible with any mode (unlike the Dienes, 2008, calculator that assumed that 1-tailed models had a mode of zero). Reference page: http://www.lifesci.sussex.ac.uk/home/Zoltan_Dienes/inference/Bence%20Bayes%20factor%20calculator.html
+Author: [Bence Palfi](http://www.lifesci.sussex.ac.uk/home/Zoltan_Dienes/inference/Bence%20Bayes%20factor%20calculator.html).
+
+The BF function has been updated recently. The novel function has options for a likelihood that is either normal- or t-distributed, and a model of H1 that is either uniform, or normal or t- (or Cauchy-) distributed, with the normal/t/cauchy models being 1- or 2-tailed. In addition, the 1-tailed models are compatible with any mode (unlike the Dienes, 2008, calculator that assumed that 1-tailed models had a mode of zero).  
 
 ```{r}
 
@@ -193,6 +212,10 @@ BfUpdated<-function(sd, obtained, dfdata = 1, likelihood = c("normal", "t"),
 
 ## Bf_powercalc
 
+Author: Elizabeth Wonnacott.
+
+This works with the Bf function above. It requires the same values as that function (i.e. the obtained mean and SE for the current sample, a value for the predicted mean, which is set to be sdtheory (with meanoftheory=0), and the current number of participants N). However rather than return BF for current sample, it works out what the BF would be for a range of different subject numbers (assuming that the SE scales with sqrt(N)).
+
 ```{r Bf_powercalc, message=FALSE, warning=FALSE}
 
 Bf_powercalc<-function(sd, obtained, uniform, lower=0, upper=1, meanoftheory=0, sdtheory=1, tail=1, N, min, max)
@@ -213,3 +236,334 @@ Bf_powercalc<-function(sd, obtained, uniform, lower=0, upper=1, meanoftheory=0, 
   return(output) 
 }
 ```
+
+## Bf_set
+
+Bf_set is a wrapper around Bf which allows us to caculate a set of BFs and put them in a table. It can only be used with non-uniform method and each h1 must be positive (as for original calculator).
+
+```{r}
+Bf_set <-function(names_list, meandiff_list, sd_list,  h1_list, tail_list)
+{
+  Bfs = vector('double')
+   for (i in 1:length(meandiff_list)){
+    Bfs[i] = Bf(sd_list[i], meandiff_list[i], uniform = 0, meanoftheory = 0, sdtheory=h1_list[i] , tail = tail_list[i])$BayesFactor
+   
+  }
+  
+  df = data.frame(names_list, cbind(round(meandiff_list,3), round(sd_list,3),  h1_list, round(Bfs,3)))
+  colnames(df) = c("Contrast", "Mean difference", "SE", "H1 estimate", "BF" )
+  return(df)
+  
+  kable(df)
+}
+```
+
+## addBf_ranges
+
+This function takes as its input a dataframe which is the output of the BF_set function. This will have a set of betas, standard errors and sd-theory. The function adds and additional column to this table which shows the range of values over which BF’s meet the criteria of (i) strong evdience for null (BF< 1/10); substantial evidence for null (BF< 1/3); ambiguous (3 > BF >1/3 ); substantial evidence H1 (BF >= 10).
+
+```{r}
+addBf_ranges <-function(Bf_df, sdtheoryrange)
+{
+ 
+  BFranges = vector()  
+  for (b in 1:dim(Bf_df)[1]){
+      range = Bf_range(sd=as.numeric(as.character(Bf_df$SE[b])), obtained=as.numeric(as.character(Bf_df$'Mean difference'[b])), meanoftheory=0, sdtheoryrange=sdtheoryrange)
+    
+      from_table = vector()
+      to_table = vector()
+      cat = vector()
+      category_table = vector()
+
+      for(i in 1:dim(range)[1]) {       # go through each value in the range and categorize it
+
+        #categorize current BF 
+        if (range[i,2] <= (1/3)) { 
+          cat[i] = "H0"      ## below or equal to 1/3
+        } else if (range[i,2] < 3) { ## NOT below or equal to 1/3, IS below 3 
+          cat[i] = "ambig"
+        } else {                ## NOT below or equal to 1/3, NOT below 3
+          cat[i] = "substH1"
+        }
+        
+        # adjust the table
+        j = length(category_table) 
+        
+        if (i==1){                      # first one
+          category_table[j+1] = cat[i]   
+          from_table[j+1] = range[i,1]
+          
+        } else if (cat[i] != cat[i-1]) { # NOT the first one, IS one where need to start new range 
+          to_table[j] = range[i-1,1]
+          category_table[j+1] = cat[i]
+          from_table[j+1] = range[i,1]
+        } 
+        
+        if (i==dim(range)[1]){        # if its the last one, finish off the table
+          to_table[j] = range[i,1]
+        }
+      }
+
+      # go through the little table and turn it int a string of ranges  
+      string = ""
+      for(i in 1: length(category_table)){
+          string = paste(string, category_table[i],":", round(from_table[i],3),"-", round(to_table[i],3))
+          }
+
+      BFranges[b] = string
+    }
+  out = cbind(Bf_df, BFranges)
+  return(out)
+}
+```
+
+
+
+## logodds
+This function takes a percentage p and returns the logodds value.
+
+```{r logodds}
+logodds <- function(p){log(p/(100-p))} 
+```
+
+## percentage
+This function does the reverse of the function above.
+
+```{r}
+percentage <- function(logodds) {(exp(logodds)/(1+exp(logodds)) ) * 100}
+```
+
+
+## getmode
+Author: [Tutorials point](https://www.tutorialspoint.com/r/r_mean_median_mode.htm).
+
+```{r}
+getmode <- function(v) {
+   uniqv <- unique(v)
+   uniqv[which.max(tabulate(match(v, uniqv)))]
+}
+```
+
+## summarySE
+
+Author: [Cookbook for R](http://www.cookbook-r.com/Manipulating_data/Summarizing_data/).
+
+It summarizes data, giving count, mean, standard deviation, standard error of the mean, and confidence interval (default 95%).
+
+- data: a data frame
+
+- measurevar: the name of a column that contains the variable to be summarized
+
+- groupvars: a vector containing the names of the columns that contain grouping variables
+
+- na.rm: a boolean that indicates whether to ignore NA’s
+
+- conf.interval: the percent range of the confidence interval (default is 95%)
+
+```{r}
+summarySE <- function(data=NULL, measurevar, groupvars=NULL, na.rm=FALSE,
+                      conf.interval=.95, .drop=TRUE) {
+    require(plyr)
+
+    # New version of length which can handle NA's: if na.rm==T, don't count them
+    length2 <- function (x, na.rm=FALSE) {
+        if (na.rm) sum(!is.na(x))
+        else       length(x)
+    }
+
+    # This does the summary. For each group's data frame, return a vector with
+    # N, mean, and sd
+    datac <- ddply(data, groupvars, .drop=.drop,
+      .fun = function(xx, col) {
+        c(N    = length2(xx[[col]], na.rm=na.rm),
+          mean = mean   (xx[[col]], na.rm=na.rm),
+          sd   = sd     (xx[[col]], na.rm=na.rm)
+        )
+      },
+      measurevar
+    )
+
+    # Rename the "mean" column    
+    datac <- rename(datac, c("mean" = measurevar))
+
+    datac$se <- datac$sd / sqrt(datac$N)  # Calculate standard error of the mean
+
+    # Confidence interval multiplier for standard error
+    # Calculate t-statistic for confidence interval: 
+    # e.g., if conf.interval is .95, use .975 (above/below), and use df=N-1
+    ciMult <- qt(conf.interval/2 + .5, datac$N-1)
+    datac$ci <- datac$se * ciMult
+
+    return(datac)
+}
+```
+
+## summarySEwithin
+
+Author: [Cookbook for R](http://www.cookbook-r.com/Graphs/Plotting_means_and_error_bars_(ggplot2)/#Helper).
+
+From that website:
+
+Summarizes data, handling within-subjects variables by removing inter-subject variability. It will still work if there are no within-subjects variables. Gives count, un-normed mean, normed mean (with same between-group mean), standard deviation, standard error of the mean, and confidence interval. If there are within-subject variables, calculate adjusted values using method from Morey (2008).
+
+- data: a data frame
+
+- measurevar: the name of a column that contains the variable to be summarized
+
+- betweenvars: a vector containing names of columns that are between-subjects variables
+
+- withinvars: a vector containing names of columns that are within-subjects variables
+
+- idvar: the name of a column that identifies each subject (or matched subjects)
+
+- na.rm: a boolean that indicates whether to ignore NA’s
+
+- conf.interval: the percent range of the confidence interval (default is 95%)
+
+```{r}
+summarySEwithin <- function(data=NULL, measurevar, betweenvars=NULL, withinvars=NULL,
+                            idvar=NULL, na.rm=FALSE, conf.interval=.95, .drop=TRUE) {
+
+  # Ensure that the betweenvars and withinvars are factors
+  factorvars <- vapply(data[, c(betweenvars, withinvars), drop=FALSE],
+    FUN=is.factor, FUN.VALUE=logical(1))
+
+  if (!all(factorvars)) {
+    nonfactorvars <- names(factorvars)[!factorvars]
+    message("Automatically converting the following non-factors to factors: ",
+            paste(nonfactorvars, collapse = ", "))
+    data[nonfactorvars] <- lapply(data[nonfactorvars], factor)
+  }
+
+  # Get the means from the un-normed data
+  datac <- summarySE(data, measurevar, groupvars=c(betweenvars, withinvars),
+                     na.rm=na.rm, conf.interval=conf.interval, .drop=.drop)
+
+  # Drop all the unused columns (these will be calculated with normed data)
+  datac$sd <- NULL
+  datac$se <- NULL
+  datac$ci <- NULL
+
+  # Norm each subject's data
+  ndata <- normDataWithin(data, idvar, measurevar, betweenvars, na.rm, .drop=.drop)
+
+  # This is the name of the new column
+  measurevar_n <- paste(measurevar, "_norm", sep="")
+
+  # Collapse the normed data - now we can treat between and within vars the same
+  ndatac <- summarySE(ndata, measurevar_n, groupvars=c(betweenvars, withinvars),
+                      na.rm=na.rm, conf.interval=conf.interval, .drop=.drop)
+
+  # Apply correction from Morey (2008) to the standard error and confidence interval
+  #  Get the product of the number of conditions of within-S variables
+  nWithinGroups    <- prod(vapply(ndatac[,withinvars, drop=FALSE], FUN=nlevels,
+                           FUN.VALUE=numeric(1)))
+  correctionFactor <- sqrt( nWithinGroups / (nWithinGroups-1) )
+
+  # Apply the correction factor
+  ndatac$sd <- ndatac$sd * correctionFactor
+  ndatac$se <- ndatac$se * correctionFactor
+  ndatac$ci <- ndatac$ci * correctionFactor
+
+  # Combine the un-normed means with the normed results
+  merge(datac, ndatac)
+}
+```
+
+## normDataWithin
+
+Author: [Cookbook for R](http://www.cookbook-r.com/Graphs/Plotting_means_and_error_bars_(ggplot2)/#Helper).
+
+This function is used by the SummarySEWithin function above.
+From that website:
+
+Norms the data within specified groups in a data frame; it normalizes each subject (identified by idvar) so that they have the same mean, within each group specified by betweenvars.
+
+- data: a data frame
+
+- idvar: the name of a column that identifies each subject (or matched subjects)
+
+- measurevar: the name of a column that contains the variable to be summarized
+
+- betweenvars: a vector containing names of columns that are between-subjects variables
+
+- na.rm: a boolean that indicates whether to ignore NA’s
+
+```{r}
+normDataWithin <- function(data=NULL, idvar, measurevar, betweenvars=NULL,
+                           na.rm=FALSE, .drop=TRUE) {
+    #library(plyr)
+
+    # Measure var on left, idvar + between vars on right of formula.
+    data.subjMean <- ddply(data, c(idvar, betweenvars), .drop=.drop,
+     .fun = function(xx, col, na.rm) {
+        c(subjMean = mean(xx[,col], na.rm=na.rm))
+      },
+      measurevar,
+      na.rm
+    )
+
+    # Put the subject means with original data
+    data <- merge(data, data.subjMean)
+
+    # Get the normalized data in a new column
+    measureNormedVar <- paste(measurevar, "_norm", sep="")
+    data[,measureNormedVar] <- data[,measurevar] - data[,"subjMean"] +
+                               mean(data[,measurevar], na.rm=na.rm)
+
+    # Remove this subject mean column
+    data$subjMean <- NULL
+
+    return(data)
+}
+```
+
+## get_coeffs
+
+This function allows us to inspect particular coefficients from the output of an LME model by putting them in table.
+
+- x: the output returned when running lmer or glmer (i.e. an object of type lmerMod or glmerMod)
+
+- list: a list of the names of the coefficients to be extracted (e.g. c(“variable1”, “variable1:variable2”))
+
+```{r}
+get_coeffs <- function(x,list){(as.data.frame(summary(x)$coefficients)[list,])}
+```
+
+## lizContrasts
+
+Author: Elizabeth Wonnacott.
+
+This function can be used to create two centered dummy variables which stand in place of a three way factor (condition). This allows us to inspect each contrast separately, as well as their interactions with other factors. Other fixed effects in the model can be evaluated as the average effects across all levels of the factor.
+
+The function takes a data frame (d), a factor from that database (condition), which must have three levels, and the name of the level of the factor which is to be used as the baseline for the contrasts (baselevel).
+
+```{r}
+lizContrasts= function(d, condition, baselevel) 
+{
+ 
+    condition = factor(condition)
+ condition = relevel(condition, baselevel)
+
+    a= (contrasts(condition)-apply(contrasts(condition),2,mean))
+    d$dummy1[condition== rownames(a)[1]] <- a[1] 
+    d$dummy1[condition== rownames(a)[2]] <- a[2] 
+    d$dummy1[condition== rownames(a)[3]] <- a[3] 
+    
+    d$dummy2[condition== rownames(a)[1]] <- a[4] 
+    d$dummy2[condition== rownames(a)[2]] <- a[5] 
+    d$dummy2[condition== rownames(a)[3]] <- a[6] 
+
+    name1 = paste(baselevel, rownames(a)[2],sep="_VERSUS_")
+    name2 = paste(baselevel, rownames(a)[3],sep="_VERSUS_")
+
+    d[name1] = d$dummy1 
+    d[name2] = d$dummy2 
+
+    d$dummy1 <-NULL 
+    d$dummy2 <-NULL 
+    
+    return(d)
+}
+```
+
