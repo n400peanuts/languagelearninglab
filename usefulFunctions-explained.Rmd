@@ -5,6 +5,40 @@ title: "Functions frequently used"
 This is an R Markdown document explaining all the functions used by the language and learning lab. 
 The functions are stored into the *https://github.com/n400peanuts/languagelearninglab/docs/tools* folder. 
 
+## Load the functions automatically from Github
+
+This function loads all the functions stored in the */tools* folder. It requires two arguments, urlFolder that is the url of the github at the master tree level, and the urlRaw, that is the raw address of the folder.
+
+In the case of the languagelearninglab repository, these two arguments are the following:
+```{r}
+urlFolder <- 'https://api.github.com/repos/n400peanuts/languagelearninglab/git/trees/master?recursive=1'
+urlRaw <- 'https://raw.githubusercontent.com/n400peanuts/languagelearninglab/master/tools/'
+```
+
+```{r}
+loadFunctionsGithub <-function(urlFolder, urlRaw){
+  if (!require(httr)) {
+    stop("httr not installed")
+  } 
+  else if (!require(RCurl)){
+    stop("RCurl not installed") 
+  }
+  else {
+    print('----loading. Please wait----')
+  };
+  httr::GET(urlFolder)-> req
+  stop_for_status(req)
+  filelist <- unlist(lapply(content(req)$tree, "[", "path"), use.names = F)
+  urlFunctions <- grep("docs/tools/", filelist, value = TRUE, fixed = TRUE)
+  gsub("docs/tools/", "", urlFunctions) -> functions
+  for (i in 1:length(functions)){
+    RCurl::getURL(paste0(urlRaw, functions[i]), ssl.verifypeer = FALSE)-> temp
+    eval(parse(text = temp), envir = .GlobalEnv)
+  };
+}
+```
+
+
 ## myCenter
 
 This function outputs the centered values of a variable, which can be a numeric variable, a factor, or a data frame. It was taken from Florian Jaegers blog https://hlplab.wordpress.com/2009/04/27/centering-several-variables/.

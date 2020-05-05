@@ -295,6 +295,33 @@ $(document).ready(function () {
 
 
 <p>This is an R Markdown document explaining all the functions used by the language and learning lab. The functions are stored into the <em><a href="https://github.com/n400peanuts/languagelearninglab/docs/tools" class="uri">https://github.com/n400peanuts/languagelearninglab/docs/tools</a></em> folder.</p>
+<div id="load-the-functions-automatically-from-github" class="section level2">
+<h2>Load the functions automatically from Github</h2>
+<p>This function loads all the functions stored in the <em>/tools</em> folder. It requires two arguments, urlFolder that is the url of the github at the master tree level, and the urlRaw, that is the raw address of the folder.</p>
+<p>In the case of the languagelearninglab repository, these two arguments are the following:</p>
+<pre class="r"><code>urlFolder &lt;- &#39;https://api.github.com/repos/n400peanuts/languagelearninglab/git/trees/master?recursive=1&#39;
+urlRaw &lt;- &#39;https://raw.githubusercontent.com/n400peanuts/languagelearninglab/master/tools/&#39;</code></pre>
+<pre class="r"><code>loadFunctionsGithub &lt;-function(urlFolder, urlRaw){
+  if (!require(httr)) {
+    stop(&quot;httr not installed&quot;)
+  } 
+  else if (!require(RCurl)){
+    stop(&quot;RCurl not installed&quot;) 
+  }
+  else {
+    print(&#39;----loading. Please wait----&#39;)
+  };
+  httr::GET(urlFolder)-&gt; req
+  stop_for_status(req)
+  filelist &lt;- unlist(lapply(content(req)$tree, &quot;[&quot;, &quot;path&quot;), use.names = F)
+  urlFunctions &lt;- grep(&quot;docs/tools/&quot;, filelist, value = TRUE, fixed = TRUE)
+  gsub(&quot;docs/tools/&quot;, &quot;&quot;, urlFunctions) -&gt; functions
+  for (i in 1:length(functions)){
+    RCurl::getURL(paste0(urlRaw, functions[i]), ssl.verifypeer = FALSE)-&gt; temp
+    eval(parse(text = temp), envir = .GlobalEnv)
+  };
+}</code></pre>
+</div>
 <div id="mycenter" class="section level2">
 <h2>myCenter</h2>
 <p>This function outputs the centered values of a variable, which can be a numeric variable, a factor, or a data frame. It was taken from Florian Jaegers blog <a href="https://hlplab.wordpress.com/2009/04/27/centering-several-variables/" class="uri">https://hlplab.wordpress.com/2009/04/27/centering-several-variables/</a>.</p>
