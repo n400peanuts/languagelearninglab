@@ -10,7 +10,6 @@ This is an R Markdown document explaining all the functions used by the language
 The functions are stored into the [tools](https://github.com/n400peanuts/languagelearninglab/tree/master/tools) folder. 
 
 
-
 ## loadFunctionsGithub 
 
 Author: Eva Viviani.
