@@ -120,11 +120,11 @@ lizCenter= function(x, listfname)
 }
 ```	
 
-## BayesFactor
+## Bf
 
 Author: [Baguely and Kayne (2010)](http://www.academia.edu/427288/Review_of_Understanding_psychology_as_a_science_An_introduction_to_scientific_and_statistical_inference).
 
-This function is equivalent to the [Dienes (2008) calculator](http://www.lifesci.sussex.ac.uk/home/Zoltan_Dienes/inference/Bayes.htm).
+This function computes the Bayes Factor and it's equivalent to the [Dienes (2008) calculator](http://www.lifesci.sussex.ac.uk/home/Zoltan_Dienes/inference/Bayes.htm).
 
 ```{r BayesFactor, message=FALSE, warning=FALSE}
 
