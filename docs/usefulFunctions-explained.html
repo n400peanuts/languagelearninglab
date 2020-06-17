@@ -838,6 +838,204 @@ urlRaw &lt;- &#39;https://raw.githubusercontent.com/n400peanuts/languagelearning
     return(d)
 }</code></pre>
 </div>
+<div id="bf_model" class="section level2">
+<h2>Bf_model</h2>
+<p>Author: Elizabeth Wonnacott</p>
+<p>This function calls the Bf function described above. Summary should be the coefficients summary from an lmer/gmer model (obtained via #summary(model)$coefficients). If its a lmer model, it expects there to be a columns “df” and “p” (i.e.summary function has been called using lmerTest package which applieds Kenward-Roger approximation for denominator degrees of freedom and computes p values). For each coefficient, the model uses the estimate as the obtained mean and the Std.Error as the measure of standard error.</p>
+<p>The function allows for positive and negtive h1 values. If negative, since the BF function requires a positive value for sdtheory, both sdtheory and #obtained are multiplied by -1.</p>
+<p>It doesn’t round unless there is an argument “digits” which says how many dp to round to- in this case the round_df function below is called.</p>
+<pre class="r"><code>Bf_model &lt;-function(coeff_summary, coeff_list, h1_list,h1_motivation, tail_list, digits = &quot;&quot;)
+{
+  
+  Bfs = vector(&#39;double&#39;)
+  estimates = vector(&#39;double&#39;)
+  sterrors = vector(&#39;double&#39;)
+  sdtheorys = vector(&#39;double&#39;)
+  pvalues = vector(&#39;double&#39;)
+  tzvalues = vector(&#39;double&#39;)
+  
+  
+  #  i=2
+  for (i in 1:length(coeff_list)){
+    
+    sd_error = coeff_summary[coeff_list[i], &quot;Std. Error&quot;]
+    obtained = coeff_summary[coeff_list[i], &quot;Estimate&quot;]
+    stdtheory = h1_list[i]
+    
+    
+    if(h1_list[i] &lt;0) {
+      stdtheory = h1_list[i]*-1
+      obtained = (coeff_summary[coeff_list[i], &quot;Estimate&quot;]*-1)}
+    
+    
+    Bfs[i] = Bf(sd_error, obtained, uniform = 0, meanoftheory = 0, sdtheory=stdtheory , tail = tail_list[i])$BayesFactor
+    estimates[i] = obtained
+    sdtheorys[i] = stdtheory
+    sterrors[i] = sd_error
+    if(colnames(coeff_summary)[3]==&quot;z value&quot;) {
+      tzlabel = &quot;z&quot;
+      tzvalues[i]= abs(coeff_summary[coeff_list[i], 3])*sign(obtained)
+      pvalues[i] = coeff_summary[coeff_list[i], 4]  
+    } 
+    else if(colnames(coeff_summary)[3]==&quot;df&quot;) {
+      tzlabel = &quot;t&quot;
+      tzvalues[i]= abs(coeff_summary[coeff_list[i], 4])*sign(obtained)
+      pvalues[i] = coeff_summary[coeff_list[i], 5]  
+    } 
+    
+  }
+  
+  df = data.frame(cbind(coeff_list, estimates, sterrors, tzvalues, pvalues, sdtheorys,  tail_list, Bfs,h1_motivation )   )
+  colnames(df) = c(&quot;coefficient&quot;, &quot;estimate&quot;, &quot;std.Error&quot;, tzlabel,&quot;p&quot;,&quot;sdtheory&quot;, &quot;BFtail&quot;, &quot;Bf&quot;,&quot;h1 motivation&quot; )
+  df$estimate = as.numeric(as.character(df$estimate))
+  df$std.Error = as.numeric(as.character(df$std.Error))
+  df$sdtheory = as.numeric(as.character(df$sdtheory))
+  
+  df$Bf = as.numeric(as.character(df$Bf))
+  df$p = as.numeric(as.character(df$p))
+  if (tzlabel== &quot;z&quot;) {df$z = as.numeric(as.character(df$z))}
+  if (tzlabel== &quot;t&quot;) {df$t = as.numeric(as.character(df$t))}
+  if (digits !=  &quot;&quot;) {df = round_df(df, digits)}
+  return(df)
+  
+}</code></pre>
+</div>
+<div id="round_df" class="section level2">
+<h2>round_df</h2>
+<p>Author: Elizabeth Wonnacott</p>
+<p>Take a data frame “df” and round any numeric column by to the number of dp given in digits.</p>
+<pre class="r"><code>round_df &lt;- function(df, digits) {
+    for(i in 1: ncol(df)){
+     
+      if (is.numeric(df[,i])) { 
+        df[,i]= round(df[,i],digits) }
+    }
+    
+    return(df)
+}</code></pre>
+</div>
+<div id="bf_range" class="section level2">
+<h2>Bf_range</h2>
+<p>Author: Elizabeth Wonnacott</p>
+<p>This works with the Bf function above. It requires the obtained mean and SE for the current sample and works out what the BF would be for a range of predicted means (which are set to be sdtheoryrange (with meanoftheory=0)).</p>
+<pre class="r"><code>Bf_range&lt;-function(sd, obtained, meanoftheory=0, sdtheoryrange, tail=1)
+{
+  
+  x = c(0)
+  y = c(0)
+  
+  for(sdi in sdtheoryrange)
+  {
+    #sdi = sdtheoryrange[1]
+    B = as.numeric(Bf(sd, obtained, meanoftheory=0, uniform = 0, sdtheory=sdi, tail)[3])
+    
+    #following line corrects for the fact that the calcuator does not correctly compute BF when sdtheory==0; this code ensures that if sdtheory ==0, BF=1
+    
+    if (sdi ==0 ) {B=1}
+    
+    x= append(x,sdi)  
+    y= append(y,B)
+    output = cbind(x,y)
+    
+  } 
+  output = output[-1,] 
+  colnames(output) = c(&quot;sdtheory&quot;, &quot;BF&quot;)
+  return(output) 
+}</code></pre>
+</div>
+<div id="addbf_ranges3" class="section level2">
+<h2>addBf_ranges3</h2>
+<p>Author: Elizabeth Wonnacott</p>
+<p>Similar to addBf_ranges2 except that it works out ranges by working down/up from the given sd_theory value in increments given by stepsizes up to maximum given by maxs. Stepsizes/maxs can either be a single value used across all the coefficients or can be a vector of values (one per row - size must match )</p>
+<pre class="r"><code>addBf_ranges3 &lt;-function(Bf_df, stepsizes, maxs)
+{
+  RRminV = vector()
+  RRmaxV = vector()
+  for (b in 1:dim(Bf_df)[1]){
+
+      #b=8
+
+    if (length(stepsizes)==1){stepsize = stepsizes} else {stepsize = stepsizes[b]}
+    if (length(maxs)==1){max = maxs} else {max = maxs[b]}
+
+    
+    Ndp = num.decimals(stepsize)
+    BF = as.numeric(as.character(Bf_df$Bf[b]))  
+    BType= BfClassify(BF) 
+    sdtheory = as.numeric(as.character(Bf_df$sdtheory[b]))  
+    sd = as.numeric(as.character(Bf_df$std.Error[b]))
+    obtained = as.numeric(as.character(Bf_df$estimate[b]))
+    tail = as.numeric(as.character(Bf_df$BFtail[b]))
+
+    # get the max RRmax 
+    RRmax = &quot;&quot;
+    lastsdtheory = sdtheory
+    newsdtheory = &quot;&quot;
+      while(newsdtheory&lt;= max){
+        newsdtheory = lastsdtheory + stepsize
+        newBF = Bf(sd=sd, obtained=obtained, uniform = NULL, meanoftheory=0,sdtheory=newsdtheory, tail=tail)$BayesFactor
+        
+      if (BfClassify(newBF)!= BType) {
+        RRmax = format(round(lastsdtheory, Ndp))
+        break }
+      lastsdtheory = newsdtheory
+      }
+    
+    if(RRmax == &quot;&quot; &amp; BType == &quot;h0&quot;) {RRmax = &quot;inf&quot;}  
+    if(RRmax == &quot;&quot; &amp; BType == &quot;h1&quot;) {RRmax = paste(&quot;&gt;&quot;, max, sep=&quot;&quot;)}  
+    if(RRmax == &quot;&quot; &amp; BType == &quot;ambig&quot;) {RRmax = paste(&quot;&gt;&quot;, max, sep=&quot;&quot;)}  
+    
+    # get the min RRmin 
+    RRmin = &quot;&quot;
+    lastsdtheory = sdtheory
+    newsdtheory = lastsdtheory - stepsize
+    
+    while(newsdtheory &gt; 0){
+      newBF = Bf(sd=sd, obtained=obtained, uniform = NULL, meanoftheory=0,sdtheory=newsdtheory, tail=tail)$BayesFactor
+        
+      if (BfClassify(newBF)!= BType) {
+        RRmin = format(round(lastsdtheory, Ndp))
+        break }
+      lastsdtheory = newsdtheory
+      newsdtheory = lastsdtheory-stepsize
+    }
+    
+    if(RRmin== &quot;&quot; &amp; BType == &quot;ambig&quot;) {RRmin = 0}  
+    if(RRmin== &quot;&quot; &amp; BType == &quot;h1&quot;) {RRmin = paste(&quot; 0&lt; &amp; &lt;&quot;, format(round(lastsdtheory,  Ndp), nsmall=Ndp), sep=&quot;&quot;)} 
+    if(RRmin== &quot;&quot; &amp; BType == &quot;h0&quot;) {RRmin = paste(&quot; 0&lt; &amp; &lt;&quot;, format(round(lastsdtheory,  Ndp), nsmall=Ndp), sep=&quot;&quot;)}  
+
+    RRminV[b] = RRmin
+    RRmaxV[b] = RRmax
+    
+  }
+  out = cbind(Bf_df, RRminV, RRmaxV)
+
+    colnames(out)[10:11]= c(&quot;RRmin&quot;,&quot;RRmax&quot;)
+
+  return(out)
+}</code></pre>
+</div>
+<div id="num.decimals" class="section level2">
+<h2>num.decimals</h2>
+<p>Author: Elizabeth Wonnacott</p>
+<pre class="r"><code>num.decimals &lt;- function(x) {
+    stopifnot(class(x)==&quot;numeric&quot;)
+    x &lt;- sub(&quot;0+$&quot;,&quot;&quot;,x)
+    x &lt;- sub(&quot;^.+[.]&quot;,&quot;&quot;,x)
+    nchar(x)
+}</code></pre>
+</div>
+<div id="bfclassify" class="section level2">
+<h2>BfClassify</h2>
+<p>Author: Elizabeth Wonnacott</p>
+<p>Classifies a Bayes factors as substantial for h1/h0 or ambigious (is used by addBf_ranges3) is used by Bf_addranges function below</p>
+<pre class="r"><code>BfClassify&lt;-function(B)
+{
+  if(B&lt;=(1/3)){ &quot;h0&quot;}
+  else if (B&gt;=3) {&quot;h1&quot;}  
+  else {&quot;ambig&quot;}
+}</code></pre>
+</div>
 
 
 

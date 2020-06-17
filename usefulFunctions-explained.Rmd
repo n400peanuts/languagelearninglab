@@ -574,7 +574,7 @@ For each coefficient, the model uses the estimate as the obtained mean and the S
 
 The function allows for positive and negtive h1 values. If negative, since the BF function requires a positive value for sdtheory, both sdtheory and #obtained are multiplied by -1.
 
-It doesn't round unless there is an argument "digits" which says how many dp to round to- in this case the round_df function below is called 
+It doesn't round unless there is an argument "digits" which says how many dp to round to- in this case the round_df function below is called. 
 
 ```{r}
 Bf_model <-function(coeff_summary, coeff_list, h1_list,h1_motivation, tail_list, digits = "")
@@ -633,5 +633,155 @@ Bf_model <-function(coeff_summary, coeff_list, h1_list,h1_motivation, tail_list,
   
 }
 
+```
+
+## round_df
+Author: Elizabeth Wonnacott
+
+Take a data frame "df" and round any numeric column by to the number of dp given in digits.
+```{r}
+round_df <- function(df, digits) {
+    for(i in 1: ncol(df)){
+     
+      if (is.numeric(df[,i])) { 
+        df[,i]= round(df[,i],digits) }
+    }
+    
+    return(df)
+}
+```
+
+## Bf_range
+Author: Elizabeth Wonnacott
+
+This works with the Bf function above. It requires the obtained mean and SE for the current sample and works out what the BF would be for a range of predicted means (which are set to be sdtheoryrange (with meanoftheory=0)).
+
+```{r}
+Bf_range<-function(sd, obtained, meanoftheory=0, sdtheoryrange, tail=1)
+{
+  
+  x = c(0)
+  y = c(0)
+  
+  for(sdi in sdtheoryrange)
+  {
+    #sdi = sdtheoryrange[1]
+    B = as.numeric(Bf(sd, obtained, meanoftheory=0, uniform = 0, sdtheory=sdi, tail)[3])
+    
+    #following line corrects for the fact that the calcuator does not correctly compute BF when sdtheory==0; this code ensures that if sdtheory ==0, BF=1
+    
+    if (sdi ==0 ) {B=1}
+    
+    x= append(x,sdi)  
+    y= append(y,B)
+    output = cbind(x,y)
+    
+  } 
+  output = output[-1,] 
+  colnames(output) = c("sdtheory", "BF")
+  return(output) 
+}
+
+```
+
+## addBf_ranges3
+Author: Elizabeth Wonnacott
+
+Similar to addBf_ranges2 except that it works out ranges by working down/up from the given sd_theory value in increments given by stepsizes up to maximum given by maxs. Stepsizes/maxs can either be a single value used across all the coefficients or can be a vector of values (one per row - size must match )
+
+```{r}
+addBf_ranges3 <-function(Bf_df, stepsizes, maxs)
+{
+  RRminV = vector()
+  RRmaxV = vector()
+  for (b in 1:dim(Bf_df)[1]){
+
+      #b=8
+
+    if (length(stepsizes)==1){stepsize = stepsizes} else {stepsize = stepsizes[b]}
+    if (length(maxs)==1){max = maxs} else {max = maxs[b]}
+
+    
+    Ndp = num.decimals(stepsize)
+    BF = as.numeric(as.character(Bf_df$Bf[b]))  
+    BType= BfClassify(BF) 
+    sdtheory = as.numeric(as.character(Bf_df$sdtheory[b]))  
+    sd = as.numeric(as.character(Bf_df$std.Error[b]))
+    obtained = as.numeric(as.character(Bf_df$estimate[b]))
+    tail = as.numeric(as.character(Bf_df$BFtail[b]))
+
+    # get the max RRmax 
+    RRmax = ""
+    lastsdtheory = sdtheory
+    newsdtheory = ""
+      while(newsdtheory<= max){
+        newsdtheory = lastsdtheory + stepsize
+        newBF = Bf(sd=sd, obtained=obtained, uniform = NULL, meanoftheory=0,sdtheory=newsdtheory, tail=tail)$BayesFactor
+        
+      if (BfClassify(newBF)!= BType) {
+        RRmax = format(round(lastsdtheory, Ndp))
+        break }
+      lastsdtheory = newsdtheory
+      }
+    
+    if(RRmax == "" & BType == "h0") {RRmax = "inf"}  
+    if(RRmax == "" & BType == "h1") {RRmax = paste(">", max, sep="")}  
+    if(RRmax == "" & BType == "ambig") {RRmax = paste(">", max, sep="")}  
+    
+    # get the min RRmin 
+    RRmin = ""
+    lastsdtheory = sdtheory
+    newsdtheory = lastsdtheory - stepsize
+    
+    while(newsdtheory > 0){
+      newBF = Bf(sd=sd, obtained=obtained, uniform = NULL, meanoftheory=0,sdtheory=newsdtheory, tail=tail)$BayesFactor
+        
+      if (BfClassify(newBF)!= BType) {
+        RRmin = format(round(lastsdtheory, Ndp))
+        break }
+      lastsdtheory = newsdtheory
+      newsdtheory = lastsdtheory-stepsize
+    }
+    
+    if(RRmin== "" & BType == "ambig") {RRmin = 0}  
+    if(RRmin== "" & BType == "h1") {RRmin = paste(" 0< & <", format(round(lastsdtheory,  Ndp), nsmall=Ndp), sep="")} 
+    if(RRmin== "" & BType == "h0") {RRmin = paste(" 0< & <", format(round(lastsdtheory,  Ndp), nsmall=Ndp), sep="")}  
+
+    RRminV[b] = RRmin
+    RRmaxV[b] = RRmax
+    
+  }
+  out = cbind(Bf_df, RRminV, RRmaxV)
+
+    colnames(out)[10:11]= c("RRmin","RRmax")
+
+  return(out)
+}
+
+```
+
+## num.decimals
+Author: Elizabeth Wonnacott
+
+```{r}
+num.decimals <- function(x) {
+    stopifnot(class(x)=="numeric")
+    x <- sub("0+$","",x)
+    x <- sub("^.+[.]","",x)
+    nchar(x)
+}
+```
+
+## BfClassify
+Author: Elizabeth Wonnacott
+
+Classifies a Bayes factors as substantial for h1/h0 or ambigious (is used by addBf_ranges3) is used by Bf_addranges function below
+```{r}
+BfClassify<-function(B)
+{
+  if(B<=(1/3)){ "h0"}
+  else if (B>=3) {"h1"}  
+  else {"ambig"}
+}
 ```
 
