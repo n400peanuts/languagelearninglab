@@ -374,11 +374,16 @@ div.tocify {
 <div id="loadfunctionsgithub" class="section level2">
 <h2>loadFunctionsGithub</h2>
 <p>Author: Eva Viviani.</p>
-<p>This function loads automatically all the functions stored in the <em>/tools</em> folder. It requires two arguments, urlFolder that is the url of the github at the master tree level, and the urlRaw, that is the raw address of the folder.</p>
-<p>In the case of the languagelearninglab repository, these two arguments are the following:</p>
+<p>This function loads automatically all the functions stored in the <em>/tools</em> folder. It requires three arguments:</p>
+<ul>
+<li><p>urlFolder that is the url of the github at the master tree level</p></li>
+<li><p>urlRaw, that is the raw address of the folder</p></li>
+<li><p>listFunctions that is a vector containing the functions I want to download. If I want all of them, simply leave it empty, i.e., listFunctions &lt;- NULL, otherwise specify the functions with the “.R” extention.</p></li>
+</ul>
 <pre class="r"><code>urlFolder &lt;- &#39;https://api.github.com/repos/n400peanuts/languagelearninglab/git/trees/master?recursive=1&#39;
-urlRaw &lt;- &#39;https://raw.githubusercontent.com/n400peanuts/languagelearninglab/master/tools/&#39;</code></pre>
-<pre class="r"><code>loadFunctionsGithub &lt;-function(urlFolder, urlRaw){
+urlRaw &lt;- &#39;https://raw.githubusercontent.com/n400peanuts/languagelearninglab/master/tools/&#39;
+listFunctions &lt;- NULL </code></pre>
+<pre class="r"><code>loadFunctionsGithub &lt;-function(urlFolder, urlRaw, listFunctions){
   if (!require(httr)) {
     stop(&quot;httr not installed&quot;)
   } 
@@ -393,9 +398,17 @@ urlRaw &lt;- &#39;https://raw.githubusercontent.com/n400peanuts/languagelearning
   filelist &lt;- unlist(lapply(content(req)$tree, &quot;[&quot;, &quot;path&quot;), use.names = F)
   urlFunctions &lt;- grep(&quot;docs/tools/&quot;, filelist, value = TRUE, fixed = TRUE)
   gsub(&quot;docs/tools/&quot;, &quot;&quot;, urlFunctions) -&gt; functions
-  for (i in 1:length(functions)){
-    RCurl::getURL(paste0(urlRaw, functions[i]), ssl.verifypeer = FALSE)-&gt; temp
-    eval(parse(text = temp), envir = .GlobalEnv)
+  if (length(listFunctions) == 0){ #load all
+    for (i in 1:length(functions)){
+      RCurl::getURL(paste0(urlRaw, functions[i]), ssl.verifypeer = FALSE)-&gt; temp
+      eval(parse(text = temp), envir = .GlobalEnv)
+    } 
+  } else {
+      functions[functions %in% listFunctions]-&gt; functionsIlike
+      for (i in 1:length(functionsIlike)){
+      RCurl::getURL(paste0(urlRaw, functionsIlike[i]), ssl.verifypeer = FALSE)-&gt; temp
+      eval(parse(text = temp), envir = .GlobalEnv)
+    }
   };
 }</code></pre>
 </div>
