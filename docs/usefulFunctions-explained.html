@@ -378,11 +378,11 @@ div.tocify {
 <ul>
 <li><p>urlFolder that is the url of the github at the master tree level</p></li>
 <li><p>urlRaw, that is the raw address of the folder</p></li>
-<li><p>listFunctions that is a vector containing the functions I want to download. If I want all of them, simply leave it empty, i.e., listFunctions &lt;- NULL, otherwise specify the functions with the “.R” extention.</p></li>
+<li><p>listFunctions that is a vector containing the functions I want to download. If I want all of them, simply leave it empty, i.e., listFunctions &lt;- NULL, otherwise specify the functions with the “.R” extention like this: e.g., listFunctions &lt;- c(“Bf.R”,“lizContrasts.R”,“getmode.R”)</p></li>
 </ul>
 <pre class="r"><code>urlFolder &lt;- &#39;https://api.github.com/repos/n400peanuts/languagelearninglab/git/trees/master?recursive=1&#39;
 urlRaw &lt;- &#39;https://raw.githubusercontent.com/n400peanuts/languagelearninglab/master/tools/&#39;
-listFunctions &lt;- NULL </code></pre>
+listFunctions &lt;- NULL #this needs to be a list, e.g., listFunctions &lt;- c(&quot;Bf.R&quot;,&quot;lizContrasts.R&quot;,&quot;getmode.R&quot;)</code></pre>
 <pre class="r"><code>loadFunctionsGithub &lt;-function(urlFolder, urlRaw, listFunctions){
   if (!require(httr)) {
     stop(&quot;httr not installed&quot;)
@@ -477,7 +477,7 @@ listFunctions &lt;- NULL </code></pre>
 <h2>Bf</h2>
 <p>Author: <a href="http://www.academia.edu/427288/Review_of_Understanding_psychology_as_a_science_An_introduction_to_scientific_and_statistical_inference">Baguely and Kayne (2010)</a>.</p>
 <p>This function computes the Bayes Factor and it’s equivalent to the <a href="http://www.lifesci.sussex.ac.uk/home/Zoltan_Dienes/inference/Bayes.htm">Dienes (2008) calculator</a>.</p>
-<pre class="r"><code>Bf&lt;-function(sd, obtained, uniform, lower=0, upper=1, meanoftheory=0,sdtheory=1, tail=1){
+<pre class="r"><code>Bf_old&lt;-function(sd, obtained, uniform, lower=0, upper=1, meanoftheory=0,sdtheory=1, tail=1){
   area &lt;- 0
   if(identical(uniform, 1)){
     theta &lt;- lower
@@ -517,7 +517,7 @@ listFunctions &lt;- NULL </code></pre>
 <h2>BayesFactor <em>updated</em></h2>
 <p>Author: <a href="http://www.lifesci.sussex.ac.uk/home/Zoltan_Dienes/inference/Bence%20Bayes%20factor%20calculator.html">Bence Palfi</a>.</p>
 <p>The BF function has been updated recently. The novel function has options for a likelihood that is either normal- or t-distributed, and a model of H1 that is either uniform, or normal or t- (or Cauchy-) distributed, with the normal/t/cauchy models being 1- or 2-tailed. In addition, the 1-tailed models are compatible with any mode (unlike the Dienes, 2008, calculator that assumed that 1-tailed models had a mode of zero).</p>
-<pre class="r"><code>BfUpdated&lt;-function(sd, obtained, dfdata = 1, likelihood = c(&quot;normal&quot;, &quot;t&quot;), 
+<pre class="r"><code>Bf&lt;-function(sd, obtained, dfdata = 1, likelihood = c(&quot;normal&quot;, &quot;t&quot;), 
                     modeloftheory= c(&quot;normal&quot;,&quot;t&quot;,&quot;cauchy&quot;, &quot;uniform&quot;) ,lower =0, 
                     upper=1, modeoftheory = 0, scaleoftheory = 1, dftheory = 1, tail = 2)
 {
@@ -1165,6 +1165,26 @@ listFunctions &lt;- NULL </code></pre>
   uniqv[which.max(tabulate(match(v, uniqv)))]
 }</code></pre>
 </div>
+<div id="adjust_intercept_model" class="section level2">
+<h2>adjust_intercept_model</h2>
+<p>Function to adjust the intercept of the model</p>
+<pre class="r"><code>adjust_intercept_model&lt;- function(model, chance, intercept_list = c(&quot;(Intercept)&quot;))
+{
+  summary = summary(model)$coefficients
+  
+  for (i in 1:length(intercept_list)){
+    summary[intercept_list[i], &quot;Estimate&quot;] = summary[intercept_list[i], &quot;Estimate&quot;]- chance
+    summary[intercept_list[i], &quot;z value&quot;] =  summary[intercept_list[i], &quot;Estimate&quot;]/summary[intercept_list[i], &quot;Std. Error&quot;]
+    summary[intercept_list[i], &quot;Pr(&gt;|z|)&quot;] =  p =2*pnorm(-abs(summary[intercept_list[i], &quot;z value&quot;])) }
+  
+  
+  summary[intercept_list[i], &quot;Estimate&quot;]
+  
+  
+  return(summary)
+  
+}</code></pre>
+</div>
 
 
 
@@ -1216,7 +1236,7 @@ $(document).ready(function ()  {
       theme: "bootstrap3",
       context: '.toc-content',
       hashGenerator: function (text) {
-        return text.replace(/[.\\/?&!#<>]/g, '').replace(/\s/g, '_').toLowerCase();
+        return text.replace(/[.\\/?&!#<>]/g, '').replace(/\s/g, '_');
       },
       ignoreSelector: ".toc-ignore",
       scrollTo: 0

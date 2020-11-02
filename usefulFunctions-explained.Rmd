@@ -20,13 +20,13 @@ This function loads automatically all the functions stored in the */tools* folde
 
 - urlRaw, that is the raw address of the folder
 
-- listFunctions that is a vector containing the functions I want to download. If I want all of them, simply leave it empty, i.e., listFunctions <- NULL, otherwise specify the functions with the ".R" extention.
+- listFunctions that is a vector containing the functions I want to download. If I want all of them, simply leave it empty, i.e., listFunctions <- NULL, otherwise specify the functions with the ".R" extention like this: e.g., listFunctions <- c("Bf.R","lizContrasts.R","getmode.R")
 
 
 ```{r}
 urlFolder <- 'https://api.github.com/repos/n400peanuts/languagelearninglab/git/trees/master?recursive=1'
 urlRaw <- 'https://raw.githubusercontent.com/n400peanuts/languagelearninglab/master/tools/'
-listFunctions <- NULL 
+listFunctions <- NULL #this needs to be a list, e.g., listFunctions <- c("Bf.R","lizContrasts.R","getmode.R")
 ```
 
 ```{r}
@@ -153,7 +153,7 @@ This function computes the Bayes Factor and it's equivalent to the [Dienes (2008
 
 ```{r BayesFactor, message=FALSE, warning=FALSE}
 
-Bf<-function(sd, obtained, uniform, lower=0, upper=1, meanoftheory=0,sdtheory=1, tail=1){
+Bf_old<-function(sd, obtained, uniform, lower=0, upper=1, meanoftheory=0,sdtheory=1, tail=1){
   area <- 0
   if(identical(uniform, 1)){
     theta <- lower
@@ -198,7 +198,7 @@ The BF function has been updated recently. The novel function has options for a 
 
 ```{r}
 
-BfUpdated<-function(sd, obtained, dfdata = 1, likelihood = c("normal", "t"), 
+Bf<-function(sd, obtained, dfdata = 1, likelihood = c("normal", "t"), 
                     modeloftheory= c("normal","t","cauchy", "uniform") ,lower =0, 
                     upper=1, modeoftheory = 0, scaleoftheory = 1, dftheory = 1, tail = 2)
 {
@@ -939,6 +939,30 @@ Function to get the mode
 getmode <- function(v) {
   uniqv <- unique(v)
   uniqv[which.max(tabulate(match(v, uniqv)))]
+}
+
+```
+
+## adjust_intercept_model
+
+Function to adjust the intercept of the model 
+
+```{r}
+adjust_intercept_model<- function(model, chance, intercept_list = c("(Intercept)"))
+{
+  summary = summary(model)$coefficients
+  
+  for (i in 1:length(intercept_list)){
+    summary[intercept_list[i], "Estimate"] = summary[intercept_list[i], "Estimate"]- chance
+    summary[intercept_list[i], "z value"] =  summary[intercept_list[i], "Estimate"]/summary[intercept_list[i], "Std. Error"]
+    summary[intercept_list[i], "Pr(>|z|)"] =  p =2*pnorm(-abs(summary[intercept_list[i], "z value"])) }
+  
+  
+  summary[intercept_list[i], "Estimate"]
+  
+  
+  return(summary)
+  
 }
 
 ```
