@@ -971,7 +971,7 @@ adjust_intercept_model<- function(model, chance, intercept_list = c("(Intercept)
 
 Author: Eva Viviani
 
-This function is a wrapper around [Ferenc Igaly's script.](https://github.com/University-of-Sheffield-EduTech/data-endpoint-gorilla.io/blob/master/Preview_Downloader_Script.R?fbclid=IwAR2zI3ZHgFKqZchCI1yEghEaGXgoDtJ_Fr3OWOGG-Iz_ki6jk30clYG3aR8)
+This function is a wrapper around [Ferenc Igali's script.](https://github.com/University-of-Sheffield-EduTech/data-endpoint-gorilla.io/blob/master/Preview_Downloader_Script.R?fbclid=IwAR2zI3ZHgFKqZchCI1yEghEaGXgoDtJ_Fr3OWOGG-Iz_ki6jk30clYG3aR8)
 
 It downloads the data from Gorilla automatically, provided that you set your Gorilla login credentials into R.
  
