@@ -967,3 +967,81 @@ adjust_intercept_model<- function(model, chance, intercept_list = c("(Intercept)
 
 ```
 
+## download_from_Gorilla
+
+Author: Eva Viviani
+
+This function is a wrapper around [Ferenc Igaly's script.](https://github.com/University-of-Sheffield-EduTech/data-endpoint-gorilla.io/blob/master/Preview_Downloader_Script.R?fbclid=IwAR2zI3ZHgFKqZchCI1yEghEaGXgoDtJ_Fr3OWOGG-Iz_ki6jk30clYG3aR8)
+
+It downloads the data from Gorilla automatically, provided that you set your Gorilla login credentials into R.
+ 
+**TO SET YOUR GORILLA LOGIN CREDENTIALS:**
+Install "keyring" package and run in R the following lines:
+                      
+ - keyring::key_set(service = "Gorilla",  username = "eva.viviani@education.ox.ac.uk") 
+
+Change the "username" with the email you use for login into Gorilla. Keyring package will ask and save your password within R. These information are passed into the function below to log into Gorilla and access your data. **Only if you have set your login credentials, you can run the "download_from_Gorilla" function below.**
+
+Arguments:
+
+- output: a character string with the name of the folder where the downloaded file is saved
+
+- ulr: a character string, or a vector of characters, with the links (starting with "https") that I want to download
+
+- myGorillaemail: the email that I use to log into Gorilla
+
+Example of how to use the function:
+```{r download_from_Gorilla example, eval=F}
+output <- c("C:/Users/...")
+previewDownloadFile <- read.csv("data.csv") #this is a preview file of the eyetracker zone that contains in the "Response" column my links. One for each trial.
+url <- previewDownloadFile[grepl("https", previewDownloadFile$Response),]$Response
+download_from_Gorilla(output, url, "eva.viviani@education.ox.ac.uk")
+```
+
+Function below:
+```{r download_from_Gorilla}
+download_from_Gorilla <-function(output, url, myGorillaemail){
+  if (!require(downloader)) {
+    stop("downloader not installed")
+  } else if (!require(keyring)){
+    stop("keyring not installed")
+  } else if (!require(httr)){
+    stop("httr not installed") 
+  } else {
+    print("------ start download -------")
+  };
+  
+  #---------------------- get credentials and login ----------------------------#
+  login <- list(
+      email = myGorillaemail, 
+     password = keyring::key_get("Gorilla", myGorillaemail))
+  login_res <- POST("https://gorilla.sc/api/login", body = login, encode = "form")
+   
+   #---------------------- cycle over the list of urls --------------------------#
+  for (i in 1:length(url)){
+    file_end <- ""
+    experiment_download_url <- GET(url[i])
+    content_type_you_need_to_save <- experiment_download_url$headers$`content-type`
+  
+    #------------------------- check content type -------------------------------# 
+    if (content_type_you_need_to_save == "text/csv") {
+      file_end <- ".csv"
+    } else if (content_type_you_need_to_save == "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet") {
+      file_end <- ".xlsx"
+    } else if (content_type_you_need_to_save == "audio/wav") {
+      file_end <- ".weba"
+    } else if (content_type_you_need_to_save == "video/webm;codecs=vp8") {
+      file_end <- ".webm"
+    }
+    
+    file_download_url <- experiment_download_url$url
+    file_name_saver <- paste0(substring(as.character(url[i]),54,nchar(as.character(url[i]))))
+    
+    #download the file
+    downloader::download(file_download_url, paste0(output, file_name_saver), mode = "wb", quiet = T)
+    print(paste0("file ",i))
+  }
+   print("------ download done -------")
+}
+```
+

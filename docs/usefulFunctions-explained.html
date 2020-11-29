@@ -1185,6 +1185,72 @@ listFunctions &lt;- NULL #this needs to be a list, e.g., listFunctions &lt;- c(&
   
 }</code></pre>
 </div>
+<div id="download_from_gorilla" class="section level2">
+<h2>download_from_Gorilla</h2>
+<p>Author: Eva Viviani</p>
+<p>This function is a wrapper around <a href="https://github.com/University-of-Sheffield-EduTech/data-endpoint-gorilla.io/blob/master/Preview_Downloader_Script.R?fbclid=IwAR2zI3ZHgFKqZchCI1yEghEaGXgoDtJ_Fr3OWOGG-Iz_ki6jk30clYG3aR8">Ferenc Igaly’s script.</a></p>
+<p>It downloads the data from Gorilla automatically, provided that you set your Gorilla login credentials into R.</p>
+<p><strong>TO SET YOUR GORILLA LOGIN CREDENTIALS:</strong> Install “keyring” package and run in R the following lines:</p>
+<ul>
+<li>keyring::key_set(service = “Gorilla”, username = “<a href="mailto:eva.viviani@education.ox.ac.uk" class="email">eva.viviani@education.ox.ac.uk</a>”)</li>
+</ul>
+<p>Change the “username” with the email you use for login into Gorilla. Keyring package will ask and save your password within R. These information are passed into the function below to log into Gorilla and access your data. <strong>Only if you have set your login credentials, you can run the “download_from_Gorilla” function below.</strong></p>
+<p>Arguments:</p>
+<ul>
+<li><p>output: a character string with the name of the folder where the downloaded file is saved</p></li>
+<li><p>ulr: a character string, or a vector of characters, with the links (starting with “https”) that I want to download</p></li>
+<li><p>myGorillaemail: the email that I use to log into Gorilla</p></li>
+</ul>
+<p>Example of how to use the function:</p>
+<pre class="r"><code>output &lt;- c(&quot;C:/Users/...&quot;)
+previewDownloadFile &lt;- read.csv(&quot;data.csv&quot;) #this is a preview file of the eyetracker zone that contains in the &quot;Response&quot; column my links. One for each trial.
+url &lt;- previewDownloadFile[grepl(&quot;https&quot;, previewDownloadFile$Response),]$Response
+download_from_Gorilla(output, url, &quot;eva.viviani@education.ox.ac.uk&quot;)</code></pre>
+<p>Function below:</p>
+<pre class="r"><code>download_from_Gorilla &lt;-function(output, url, myGorillaemail){
+  if (!require(downloader)) {
+    stop(&quot;downloader not installed&quot;)
+  } else if (!require(keyring)){
+    stop(&quot;keyring not installed&quot;)
+  } else if (!require(httr)){
+    stop(&quot;httr not installed&quot;) 
+  } else {
+    print(&quot;------ start download -------&quot;)
+  };
+  
+  #---------------------- get credentials and login ----------------------------#
+  login &lt;- list(
+      email = myGorillaemail, 
+     password = keyring::key_get(&quot;Gorilla&quot;, myGorillaemail))
+  login_res &lt;- POST(&quot;https://gorilla.sc/api/login&quot;, body = login, encode = &quot;form&quot;)
+   
+   #---------------------- cycle over the list of urls --------------------------#
+  for (i in 1:length(url)){
+    file_end &lt;- &quot;&quot;
+    experiment_download_url &lt;- GET(url[i])
+    content_type_you_need_to_save &lt;- experiment_download_url$headers$`content-type`
+  
+    #------------------------- check content type -------------------------------# 
+    if (content_type_you_need_to_save == &quot;text/csv&quot;) {
+      file_end &lt;- &quot;.csv&quot;
+    } else if (content_type_you_need_to_save == &quot;application/vnd.openxmlformats-officedocument.spreadsheetml.sheet&quot;) {
+      file_end &lt;- &quot;.xlsx&quot;
+    } else if (content_type_you_need_to_save == &quot;audio/wav&quot;) {
+      file_end &lt;- &quot;.weba&quot;
+    } else if (content_type_you_need_to_save == &quot;video/webm;codecs=vp8&quot;) {
+      file_end &lt;- &quot;.webm&quot;
+    }
+    
+    file_download_url &lt;- experiment_download_url$url
+    file_name_saver &lt;- paste0(substring(as.character(url[i]),54,nchar(as.character(url[i]))))
+    
+    #download the file
+    downloader::download(file_download_url, paste0(output, file_name_saver), mode = &quot;wb&quot;, quiet = T)
+    print(paste0(&quot;file &quot;,i))
+  }
+   print(&quot;------ download done -------&quot;)
+}</code></pre>
+</div>
 
 
 
