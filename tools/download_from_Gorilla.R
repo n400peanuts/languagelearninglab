@@ -1,10 +1,3 @@
-input <- c("C:/Users/eva_v/Nexus365/Elizabeth Wonnacott - Eva_Liz_Leverhulme/leverhulmeNDL/eyetracker/data/")
-output <- c("C:/Users/eva_v/Nexus365/Elizabeth Wonnacott - Eva_Liz_Leverhulme/leverhulmeNDL/eyetracker/data/rawData/")
-previewDownloadFile <- read.csv(paste0(input, "data_pilot.csv"))
-url <- pilot[grepl("https", pilot$Response),]$Response
-
-download_from_Gorilla(output, url)
-
 # function below
 download_from_Gorilla <-function(output, url){
   if (!require(downloader)) {
