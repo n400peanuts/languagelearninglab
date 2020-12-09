@@ -9,185 +9,164 @@ output:
 This is an R Markdown document explaining all the functions used by the language and learning lab. 
 The functions are stored into the [tools](https://github.com/n400peanuts/languagelearninglab/tree/master/tools) folder. 
 
+## addBf_ranges
 
-## loadFunctionsGithub 
-
-Author: Eva Viviani.
-
-This function loads automatically all the functions stored in the */tools* folder. It requires three arguments: 
-
-- urlFolder that is the url of the github at the master tree level 
-
-- urlRaw, that is the raw address of the folder
-
-- listFunctions that is a vector containing the functions I want to download. If I want all of them, simply leave it empty, i.e., listFunctions <- NULL, otherwise specify the functions with the ".R" extention like this: e.g., listFunctions <- c("Bf.R","lizContrasts.R","getmode.R")
-
+This function takes as its input a dataframe which is the output of the BF_set function. This will have a set of betas, standard errors and sd-theory. The function adds and additional column to this table which shows the range of values over which BF’s meet the criteria of (i) strong evdience for null (BF< 1/10); substantial evidence for null (BF< 1/3); ambiguous (3 > BF >1/3 ); substantial evidence H1 (BF >= 10).
 
 ```{r}
-urlFolder <- 'https://api.github.com/repos/n400peanuts/languagelearninglab/git/trees/master?recursive=1'
-urlRaw <- 'https://raw.githubusercontent.com/n400peanuts/languagelearninglab/master/tools/'
-listFunctions <- NULL #this needs to be a list, e.g., listFunctions <- c("Bf.R","lizContrasts.R","getmode.R")
-```
-
-```{r}
-loadFunctionsGithub <-function(urlFolder, urlRaw, listFunctions){
-  if (!require(httr)) {
-    stop("httr not installed")
-  } 
-  else if (!require(RCurl)){
-    stop("RCurl not installed") 
-  }
-  else {
-    print('----loading. Please wait----')
-  };
-  httr::GET(urlFolder)-> req
-  stop_for_status(req)
-  filelist <- unlist(lapply(content(req)$tree, "[", "path"), use.names = F)
-  urlFunctions <- grep("docs/tools/", filelist, value = TRUE, fixed = TRUE)
-  gsub("docs/tools/", "", urlFunctions) -> functions
-  if (length(listFunctions) == 0){ #load all
-    for (i in 1:length(functions)){
-      RCurl::getURL(paste0(urlRaw, functions[i]), ssl.verifypeer = FALSE)-> temp
-      eval(parse(text = temp), envir = .GlobalEnv)
-    } 
-  } else {
-      functions[functions %in% listFunctions]-> functionsIlike
-      for (i in 1:length(functionsIlike)){
-      RCurl::getURL(paste0(urlRaw, functionsIlike[i]), ssl.verifypeer = FALSE)-> temp
-      eval(parse(text = temp), envir = .GlobalEnv)
-    }
-  };
-}
-
-```
-
-
-## myCenter
-Author: [Florian Jaegers](https://hlplab.wordpress.com/2009/04/27/centering-several-variables/).
-
-This function outputs the centered values of a variable, which can be a numeric variable, a factor, or a data frame.
-
-From Florian's blog:
-
-- If the input is a numeric variable, the output is the centered variable.
-
-- If the input is a factor, the output is a numeric variable with centered factor level values. That is, the factor's levels are converted into numerical values in their inherent order (if not specified otherwise,  R defaults to alphanumerical order). More specifically, this centers any binary factor so that the value below 0 will be the 1st level of the original factor, and the value above 0 will be the 2nd level.
-
-- If the input is a data frame or matrix, the output is a new matrix of the same dimension and with the centered values and column names that correspond to the colnames() of the input preceded by "c" (e.g. "Variable1" will be "cVariable1").
-
-```{r myCenter,message=FALSE, warning=FALSE}
-
-myCenter <- function(x) {
-  if (is.numeric(x)) { return(x - mean(x, na.rm=T)) }
-	if (is.factor(x)) {
-		x= as.numeric(x)
-		return(x - mean(x, na.rm=T))
-	}
-	if (is.data.frame(x) || is.matrix(x)) {
-		m= matrix(nrow=nrow(x), ncol=ncol(x))
-		colnames(m)= paste("c", colnames(x), sep="")
-	
-		for (i in 1:ncol(x)) {
-		
-			m[,i]= myCenter(x[,i])
-		}
-		return(as.data.frame(m))
-	}
-}
-```
-
-## lizCenter
-
-Author: Elizabeth Wonnacott.
-
-This function provides a wrapper around myCenter allowing to center a specific list of variables from a dataframe. 
-The input is a dataframe (x) and a list of the names of the variables which you wish to center (listfname).
-The output is a copy of the dataframe with a column (numeric) added for each of the centered variables with each one labelled with it's previous name with ".ct" appended. For example, if x is a dataframe with columns "a" and "b" lizCenter(x, list("a", "b")) will return a dataframe with two additional columns, a.ct and b.ct, which are numeric, centered codings of the corresponding variables.
-
-
-
-```{r lizCenter,message=FALSE, warning=FALSE}
-
-lizCenter= function(x, listfname) 
+addBf_ranges <-function(Bf_df, sdtheoryrange)
 {
-	for (i in 1:length(listfname)) 
-	{
-		fname = as.character(listfname[i])
-		x[paste(fname,".ct", sep="")] = myCenter(x[fname])
-	}
-		
-	return(x)
-}
-```	
+ 
+  BFranges = vector()  
+  for (b in 1:dim(Bf_df)[1]){
+      range = Bf_range(sd=as.numeric(as.character(Bf_df$SE[b])), obtained=as.numeric(as.character(Bf_df$'Mean difference'[b])), meanoftheory=0, sdtheoryrange=sdtheoryrange)
+    
+      from_table = vector()
+      to_table = vector()
+      cat = vector()
+      category_table = vector()
 
-## lizCenter2
-This function provides a wrapper around lizCenter which removes rows with missing data in the the DV before centering- note the df will have less rows as well as the centered variables (so will need to be careful with this is working with multiple dvs).
+      for(i in 1:dim(range)[1]) {       # go through each value in the range and categorize it
 
-   * dv - a string which is the column name of the column in the dataframe with the dv
-
-   * x: data frame
-
-   * listfname: a list of the variables to be centered (e.g. list(variable1,variable2))
-
-The output is a copy of the data frame with a column (always a numeric variable) added for each of the centered variables. These columns are labeled with the column's previous name, but with ".ct" appended (e.g., "variable1" will become "variable1.ct").
-
-```{r}
-
-lizCenter2= function(x, listfname, dv) 
-{
-	  x= droplevels(subset(x, is.na(x[as.character(dv)])==FALSE))
-    x = lizCenter(x, listfname)
-	 
-	
-	return(x)
-}
-```
-
-
-
-## Bf
-
-Author: [Baguely and Kayne (2010)](http://www.academia.edu/427288/Review_of_Understanding_psychology_as_a_science_An_introduction_to_scientific_and_statistical_inference).
-
-This function computes the Bayes Factor and it's equivalent to the [Dienes (2008) calculator](http://www.lifesci.sussex.ac.uk/home/Zoltan_Dienes/inference/Bayes.htm).
-
-```{r BayesFactor, message=FALSE, warning=FALSE}
-
-Bf_old<-function(sd, obtained, uniform, lower=0, upper=1, meanoftheory=0,sdtheory=1, tail=1){
-  area <- 0
-  if(identical(uniform, 1)){
-    theta <- lower
-    range <- upper - lower
-    incr <- range / 2000
-    for (A in -1000:1000){
-      theta <- theta + incr
-      dist_theta <- 1 / range
-      height <- dist_theta * dnorm(obtained, theta, sd)
-      area <- area + height * incr
-    }
-  }else
-  {theta <- meanoftheory - 5 * sdtheory
-  incr <- sdtheory / 200
-  for (A in -1000:1000){
-    theta <- theta + incr
-    dist_theta <- dnorm(theta, meanoftheory, sdtheory)
-    if(identical(tail, 1)){
-      if (theta <= 0){
-        dist_theta <- 0
-      } else {
-        dist_theta <- dist_theta * 2
+        #categorize current BF 
+        if (range[i,2] <= (1/3)) { 
+          cat[i] = "H0"      ## below or equal to 1/3
+        } else if (range[i,2] < 3) { ## NOT below or equal to 1/3, IS below 3 
+          cat[i] = "ambig"
+        } else {                ## NOT below or equal to 1/3, NOT below 3
+          cat[i] = "substH1"
+        }
+        
+        # adjust the table
+        j = length(category_table) 
+        
+        if (i==1){                      # first one
+          category_table[j+1] = cat[i]   
+          from_table[j+1] = range[i,1]
+          
+        } else if (cat[i] != cat[i-1]) { # NOT the first one, IS one where need to start new range 
+          to_table[j] = range[i-1,1]
+          category_table[j+1] = cat[i]
+          from_table[j+1] = range[i,1]
+        } 
+        
+        if (i==dim(range)[1]){        # if its the last one, finish off the table
+          to_table[j] = range[i,1]
+        }
       }
+
+      # go through the little table and turn it int a string of ranges  
+      string = ""
+      for(i in 1: length(category_table)){
+          string = paste(string, category_table[i],":", round(from_table[i],3),"-", round(to_table[i],3))
+          }
+
+      BFranges[b] = string
     }
-    height <- dist_theta * dnorm(obtained, theta, sd)
-    area <- area + height * incr
+  out = cbind(Bf_df, BFranges)
+  return(out)
+}
+```
+
+## addBf_ranges3
+Author: Elizabeth Wonnacott
+
+Similar to addBf_ranges2 except that it works out ranges by working down/up from the given sd_theory value in increments given by stepsizes up to maximum given by maxs. Stepsizes/maxs can either be a single value used across all the coefficients or can be a vector of values (one per row - size must match )
+
+```{r}
+addBf_ranges3 <-function(Bf_df, stepsizes, maxs)
+{
+  RRminV = vector()
+  RRmaxV = vector()
+  for (b in 1:dim(Bf_df)[1]){
+
+      #b=8
+
+    if (length(stepsizes)==1){stepsize = stepsizes} else {stepsize = stepsizes[b]}
+    if (length(maxs)==1){max = maxs} else {max = maxs[b]}
+
+    
+    Ndp = num.decimals(stepsize)
+    BF = as.numeric(as.character(Bf_df$Bf[b]))  
+    BType= BfClassify(BF) 
+    sdtheory = as.numeric(as.character(Bf_df$sdtheory[b]))  
+    sd = as.numeric(as.character(Bf_df$std.Error[b]))
+    obtained = as.numeric(as.character(Bf_df$estimate[b]))
+    tail = as.numeric(as.character(Bf_df$BFtail[b]))
+
+    # get the max RRmax 
+    RRmax = ""
+    lastsdtheory = sdtheory
+    newsdtheory = ""
+      while(newsdtheory<= max){
+        newsdtheory = lastsdtheory + stepsize
+        newBF = Bf(sd=sd, obtained=obtained, uniform = NULL, meanoftheory=0,sdtheory=newsdtheory, tail=tail)$BayesFactor
+        
+      if (BfClassify(newBF)!= BType) {
+        RRmax = format(round(lastsdtheory, Ndp))
+        break }
+      lastsdtheory = newsdtheory
+      }
+    
+    if(RRmax == "" & BType == "h0") {RRmax = "inf"}  
+    if(RRmax == "" & BType == "h1") {RRmax = paste(">", max, sep="")}  
+    if(RRmax == "" & BType == "ambig") {RRmax = paste(">", max, sep="")}  
+    
+    # get the min RRmin 
+    RRmin = ""
+    lastsdtheory = sdtheory
+    newsdtheory = lastsdtheory - stepsize
+    
+    while(newsdtheory > 0){
+      newBF = Bf(sd=sd, obtained=obtained, uniform = NULL, meanoftheory=0,sdtheory=newsdtheory, tail=tail)$BayesFactor
+        
+      if (BfClassify(newBF)!= BType) {
+        RRmin = format(round(lastsdtheory, Ndp))
+        break }
+      lastsdtheory = newsdtheory
+      newsdtheory = lastsdtheory-stepsize
+    }
+    
+    if(RRmin== "" & BType == "ambig") {RRmin = 0}  
+    if(RRmin== "" & BType == "h1") {RRmin = paste(" 0< & <", format(round(lastsdtheory,  Ndp), nsmall=Ndp), sep="")} 
+    if(RRmin== "" & BType == "h0") {RRmin = paste(" 0< & <", format(round(lastsdtheory,  Ndp), nsmall=Ndp), sep="")}  
+
+    RRminV[b] = RRmin
+    RRmaxV[b] = RRmax
+    
   }
-  }
-  LikelihoodTheory <- area
-  Likelihoodnull <- dnorm(obtained, 0, sd)
-  BayesFactor <- LikelihoodTheory / Likelihoodnull
-  ret <- list("LikelihoodTheory" = LikelihoodTheory,"Likelihoodnull" = Likelihoodnull, "BayesFactor" = BayesFactor)
-  ret
-} 
+  out = cbind(Bf_df, RRminV, RRmaxV)
+
+    colnames(out)[10:11]= c("RRmin","RRmax")
+
+  return(out)
+}
+
+```
+
+
+## adjust_intercept_model
+
+Function to adjust the intercept of the model 
+
+```{r}
+adjust_intercept_model<- function(model, chance, intercept_list = c("(Intercept)"))
+{
+  summary = summary(model)$coefficients
+  
+  for (i in 1:length(intercept_list)){
+    summary[intercept_list[i], "Estimate"] = summary[intercept_list[i], "Estimate"]- chance
+    summary[intercept_list[i], "z value"] =  summary[intercept_list[i], "Estimate"]/summary[intercept_list[i], "Std. Error"]
+    summary[intercept_list[i], "Pr(>|z|)"] =  p =2*pnorm(-abs(summary[intercept_list[i], "z value"])) }
+  
+  
+  summary[intercept_list[i], "Estimate"]
+  
+  
+  return(summary)
+  
+}
+
 ```
 
 ## BayesFactor *updated*
@@ -249,6 +228,133 @@ Bf<-function(sd, obtained, dfdata = 1, likelihood = c("normal", "t"),
  
 ```
 
+## Bf
+
+Author: [Baguely and Kayne (2010)](http://www.academia.edu/427288/Review_of_Understanding_psychology_as_a_science_An_introduction_to_scientific_and_statistical_inference).
+
+This function computes the Bayes Factor and it's equivalent to the [Dienes (2008) calculator](http://www.lifesci.sussex.ac.uk/home/Zoltan_Dienes/inference/Bayes.htm).
+
+```{r BayesFactor, message=FALSE, warning=FALSE}
+
+Bf_old<-function(sd, obtained, uniform, lower=0, upper=1, meanoftheory=0,sdtheory=1, tail=1){
+  area <- 0
+  if(identical(uniform, 1)){
+    theta <- lower
+    range <- upper - lower
+    incr <- range / 2000
+    for (A in -1000:1000){
+      theta <- theta + incr
+      dist_theta <- 1 / range
+      height <- dist_theta * dnorm(obtained, theta, sd)
+      area <- area + height * incr
+    }
+  }else
+  {theta <- meanoftheory - 5 * sdtheory
+  incr <- sdtheory / 200
+  for (A in -1000:1000){
+    theta <- theta + incr
+    dist_theta <- dnorm(theta, meanoftheory, sdtheory)
+    if(identical(tail, 1)){
+      if (theta <= 0){
+        dist_theta <- 0
+      } else {
+        dist_theta <- dist_theta * 2
+      }
+    }
+    height <- dist_theta * dnorm(obtained, theta, sd)
+    area <- area + height * incr
+  }
+  }
+  LikelihoodTheory <- area
+  Likelihoodnull <- dnorm(obtained, 0, sd)
+  BayesFactor <- LikelihoodTheory / Likelihoodnull
+  ret <- list("LikelihoodTheory" = LikelihoodTheory,"Likelihoodnull" = Likelihoodnull, "BayesFactor" = BayesFactor)
+  ret
+} 
+```
+
+## BfClassify
+Author: Elizabeth Wonnacott
+
+Classifies a Bayes factors as substantial for h1/h0 or ambigious (is used by addBf_ranges3) is used by Bf_addranges function below
+```{r}
+BfClassify<-function(B)
+{
+  if(B<=(1/3)){ "h0"}
+  else if (B>=3) {"h1"}  
+  else {"ambig"}
+}
+```
+
+## Bf_model
+Author: Elizabeth Wonnacott
+
+This function calls the Bf function described above. Summary should be the coefficients summary from an lmer/gmer model (obtained via #summary(model)$coefficients). If its a lmer model, it expects there to be a columns "df" and "p" (i.e.summary function has been called using lmerTest package which applieds Kenward-Roger approximation for denominator degrees of freedom and computes p values).
+For each coefficient, the model uses the estimate as the obtained mean and the Std.Error as the measure of standard error.
+
+The function allows for positive and negtive h1 values. If negative, since the BF function requires a positive value for sdtheory, both sdtheory and #obtained are multiplied by -1.
+
+It doesn't round unless there is an argument "digits" which says how many dp to round to- in this case the round_df function below is called. 
+
+```{r}
+Bf_model <-function(coeff_summary, coeff_list, h1_list,h1_motivation, tail_list, digits = "")
+{
+  
+  Bfs = vector('double')
+  estimates = vector('double')
+  sterrors = vector('double')
+  sdtheorys = vector('double')
+  pvalues = vector('double')
+  tzvalues = vector('double')
+  
+  
+  #  i=2
+  for (i in 1:length(coeff_list)){
+    
+    sd_error = coeff_summary[coeff_list[i], "Std. Error"]
+    obtained = coeff_summary[coeff_list[i], "Estimate"]
+    stdtheory = h1_list[i]
+    
+    
+    if(h1_list[i] <0) {
+      stdtheory = h1_list[i]*-1
+      obtained = (coeff_summary[coeff_list[i], "Estimate"]*-1)}
+    
+    
+    Bfs[i] = Bf(sd_error, obtained, uniform = 0, meanoftheory = 0, sdtheory=stdtheory , tail = tail_list[i])$BayesFactor
+    estimates[i] = obtained
+    sdtheorys[i] = stdtheory
+    sterrors[i] = sd_error
+    if(colnames(coeff_summary)[3]=="z value") {
+      tzlabel = "z"
+      tzvalues[i]= abs(coeff_summary[coeff_list[i], 3])*sign(obtained)
+      pvalues[i] = coeff_summary[coeff_list[i], 4]  
+    } 
+    else if(colnames(coeff_summary)[3]=="df") {
+      tzlabel = "t"
+      tzvalues[i]= abs(coeff_summary[coeff_list[i], 4])*sign(obtained)
+      pvalues[i] = coeff_summary[coeff_list[i], 5]  
+    } 
+    
+  }
+  
+  df = data.frame(cbind(coeff_list, estimates, sterrors, tzvalues, pvalues, sdtheorys,  tail_list, Bfs,h1_motivation )   )
+  colnames(df) = c("coefficient", "estimate", "std.Error", tzlabel,"p","sdtheory", "BFtail", "Bf","h1 motivation" )
+  df$estimate = as.numeric(as.character(df$estimate))
+  df$std.Error = as.numeric(as.character(df$std.Error))
+  df$sdtheory = as.numeric(as.character(df$sdtheory))
+  
+  df$Bf = as.numeric(as.character(df$Bf))
+  df$p = as.numeric(as.character(df$p))
+  if (tzlabel== "z") {df$z = as.numeric(as.character(df$z))}
+  if (tzlabel== "t") {df$t = as.numeric(as.character(df$t))}
+  if (digits !=  "") {df = round_df(df, digits)}
+  return(df)
+  
+}
+
+```
+
 ## Bf_powercalc
 
 Author: Elizabeth Wonnacott.
@@ -276,6 +382,39 @@ Bf_powercalc<-function(sd, obtained, uniform, lower=0, upper=1, meanoftheory=0, 
 }
 ```
 
+## Bf_range
+Author: Elizabeth Wonnacott
+
+This works with the Bf function above. It requires the obtained mean and SE for the current sample and works out what the BF would be for a range of predicted means (which are set to be sdtheoryrange (with meanoftheory=0)).
+
+```{r}
+Bf_range<-function(sd, obtained, meanoftheory=0, sdtheoryrange, tail=1)
+{
+  
+  x = c(0)
+  y = c(0)
+  
+  for(sdi in sdtheoryrange)
+  {
+    #sdi = sdtheoryrange[1]
+    B = as.numeric(Bf(sd, obtained, meanoftheory=0, uniform = 0, sdtheory=sdi, tail)[3])
+    
+    #following line corrects for the fact that the calcuator does not correctly compute BF when sdtheory==0; this code ensures that if sdtheory ==0, BF=1
+    
+    if (sdi ==0 ) {B=1}
+    
+    x= append(x,sdi)  
+    y= append(y,B)
+    output = cbind(x,y)
+    
+  } 
+  output = output[-1,] 
+  colnames(output) = c("sdtheory", "BF")
+  return(output) 
+}
+
+```
+
 ## Bf_set
 
 Bf_set is a wrapper around Bf which allows us to caculate a set of BFs and put them in a table. It can only be used with non-uniform method and each h1 must be positive (as for original calculator).
@@ -297,81 +436,247 @@ Bf_set <-function(names_list, meandiff_list, sd_list,  h1_list, tail_list)
 }
 ```
 
-## addBf_ranges
+## deleteRandomRows
 
-This function takes as its input a dataframe which is the output of the BF_set function. This will have a set of betas, standard errors and sd-theory. The function adds and additional column to this table which shows the range of values over which BF’s meet the criteria of (i) strong evdience for null (BF< 1/10); substantial evidence for null (BF< 1/3); ambiguous (3 > BF >1/3 ); substantial evidence H1 (BF >= 10).
-
+This takes a dataframe (df) and an integer (n) and returns a df which has n rows randomly deleted
 ```{r}
-addBf_ranges <-function(Bf_df, sdtheoryrange)
-{
- 
-  BFranges = vector()  
-  for (b in 1:dim(Bf_df)[1]){
-      range = Bf_range(sd=as.numeric(as.character(Bf_df$SE[b])), obtained=as.numeric(as.character(Bf_df$'Mean difference'[b])), meanoftheory=0, sdtheoryrange=sdtheoryrange)
-    
-      from_table = vector()
-      to_table = vector()
-      cat = vector()
-      category_table = vector()
-
-      for(i in 1:dim(range)[1]) {       # go through each value in the range and categorize it
-
-        #categorize current BF 
-        if (range[i,2] <= (1/3)) { 
-          cat[i] = "H0"      ## below or equal to 1/3
-        } else if (range[i,2] < 3) { ## NOT below or equal to 1/3, IS below 3 
-          cat[i] = "ambig"
-        } else {                ## NOT below or equal to 1/3, NOT below 3
-          cat[i] = "substH1"
-        }
-        
-        # adjust the table
-        j = length(category_table) 
-        
-        if (i==1){                      # first one
-          category_table[j+1] = cat[i]   
-          from_table[j+1] = range[i,1]
-          
-        } else if (cat[i] != cat[i-1]) { # NOT the first one, IS one where need to start new range 
-          to_table[j] = range[i-1,1]
-          category_table[j+1] = cat[i]
-          from_table[j+1] = range[i,1]
-        } 
-        
-        if (i==dim(range)[1]){        # if its the last one, finish off the table
-          to_table[j] = range[i,1]
-        }
-      }
-
-      # go through the little table and turn it int a string of ranges  
-      string = ""
-      for(i in 1: length(category_table)){
-          string = paste(string, category_table[i],":", round(from_table[i],3),"-", round(to_table[i],3))
-          }
-
-      BFranges[b] = string
-    }
-  out = cbind(Bf_df, BFranges)
-  return(out)
+deleteRandomRows = function(df,n){
+  indices <- sample(1:nrow(df), n)
+  df <- df[-indices,]
+  return(df)
 }
 ```
 
+## download_from_Gorilla
 
+Author: Eva Viviani
 
-## logodds
-This function takes a percentage p and returns the logodds value.
+This function is a wrapper around [Ferenc Igali's script.](https://github.com/University-of-Sheffield-EduTech/data-endpoint-gorilla.io/blob/master/Preview_Downloader_Script.R?fbclid=IwAR2zI3ZHgFKqZchCI1yEghEaGXgoDtJ_Fr3OWOGG-Iz_ki6jk30clYG3aR8)
 
-```{r logodds}
-logodds <- function(p){log(p/(100-p))} 
+It downloads the data from Gorilla automatically, provided that you set your Gorilla login credentials into R.
+ 
+**TO SET YOUR GORILLA LOGIN CREDENTIALS:**
+Install "keyring" package and run in R the following lines:
+                      
+ - keyring::key_set(service = "Gorilla",  username = "eva.viviani@education.ox.ac.uk") 
+
+Change the "username" with the email you use for login into Gorilla. Keyring package will ask and save your password within R. These information are passed into the function below to log into Gorilla and access your data. **Only if you have set your login credentials, you can run the "download_from_Gorilla" function below.**
+
+Arguments:
+
+- output: a character string with the name of the folder where the downloaded file is saved
+
+- ulr: a character string, or a vector of characters, with the links (starting with "https") that I want to download
+
+- myGorillaemail: the email that I use to log into Gorilla
+
+Example of how to use the function:
+```{r download_from_Gorilla example, eval=F}
+output <- c("C:/Users/...")
+previewDownloadFile <- read.csv("data.csv") #this is a preview file of the eyetracker zone that contains in the "Response" column my links. One for each trial.
+url <- previewDownloadFile[grepl("https", previewDownloadFile$Response),]$Response
+download_from_Gorilla(output, url, "eva.viviani@education.ox.ac.uk")
 ```
 
-## percentage
-This function does the reverse of the function above.
+Function below:
+```{r download_from_Gorilla}
+download_from_Gorilla <-function(output, url, myGorillaemail){
+  if (!require(downloader)) {
+    stop("downloader not installed")
+  } else if (!require(keyring)){
+    stop("keyring not installed")
+  } else if (!require(httr)){
+    stop("httr not installed") 
+  } else {
+    print("------ start download -------")
+  };
+  
+  #---------------------- get credentials and login ----------------------------#
+  login <- list(
+      email = myGorillaemail, 
+     password = keyring::key_get("Gorilla", myGorillaemail))
+  login_res <- POST("https://gorilla.sc/api/login", body = login, encode = "form")
+   
+   #---------------------- cycle over the list of urls --------------------------#
+  for (i in 1:length(url)){
+    file_end <- ""
+    experiment_download_url <- GET(url[i])
+    content_type_you_need_to_save <- experiment_download_url$headers$`content-type`
+  
+    #------------------------- check content type -------------------------------# 
+    if (content_type_you_need_to_save == "text/csv") {
+      file_end <- ".csv"
+    } else if (content_type_you_need_to_save == "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet") {
+      file_end <- ".xlsx"
+    } else if (content_type_you_need_to_save == "audio/wav") {
+      file_end <- ".weba"
+    } else if (content_type_you_need_to_save == "video/webm;codecs=vp8") {
+      file_end <- ".webm"
+    }
+    
+    file_download_url <- experiment_download_url$url
+    file_name_saver <- paste0(substring(as.character(url[i]),54,nchar(as.character(url[i]))))
+    
+    #download the file
+    downloader::download(file_download_url, paste0(output, file_name_saver), mode = "wb", quiet = T)
+    print(paste0("file ",i))
+  }
+   print("------ download done -------")
+}
+```
+
+## filter2
+
+This is a function which filters a column of data removing values which are some number of standard deviations above/below the mean for that participant, possibly in some condition/subcondition.
+
+- im: the input matrix (a data frame)
+
+- svn: a list of the names of factors to be group by (subject name + one or more conditions)
+
+- fn: the name of the column containing the data to be filtered
+
+- lim: how many standard deviations above/below the mean to filter
+
+The function returns an input matrix identical to the input matrix but with an additional columns giving the group means and the "filtered" data.
 
 ```{r}
-percentage <- function(logodds) {(exp(logodds)/(1+exp(logodds)) ) * 100}
+filter2 = function(im, svn, fn, lim)
+{
+  ## work out means lisfor each subject for each word
+  
+  x = list()
+  y = ""
+  
+  for(n in svn) x=append(im[n],x)
+  for(n in svn) y=paste(y,n,sep="_")
+  
+  means = aggregate(im[fn], by = x, mean, na.rm=T)
+  head(means)
+  nocols = dim(means)[2]
+  colnames(means)[nocols] = "means"
+  
+  sds = aggregate(im[fn], by = x, sd, na.rm=T)
+  head(sds)
+  nocols = dim(sds)[2]
+  colnames(sds)[nocols] = "sds"
+  
+  gs = merge(means,sds)
+  
+  ## because if there is just one value it doesn't have a stand deviation and don't want to just disregard all of these
+  gs$sds[is.na(gs$sds)] = 0 
+  
+  gs$max = gs$means + lim*gs$sds
+  gs$min = gs$means- lim*gs$sds
+  
+  im2 = merge(im,gs, sort=F)
+  
+  
+  im2[paste(fn,"filt",sep="")] = im2[fn]
+  cn= dim(im2)[2] ## get colnumber (last one added)
+  
+  im2[,cn][im2[,fn]> im2$max] = ""
+  
+  im2[,cn][im2[,fn]< im2$min] = ""
+  
+  im2[,cn]= as.numeric(im2[,cn])
+  
+  
+  names(im2)[names(im2)=="means"] = paste("mean", y, sep="_") 
+  names(im2)[names(im2)=="sds"] = paste("sd", y, sep="_") 
+  names(im2)[names(im2)=="max"] = paste("max", y, sep="_") 
+  names(im2)[names(im2)=="min"] = paste("min", y, sep="_") 
+  
+  return(im2)
+}
 ```
 
+## generate_bin
+
+Author: Catriona Silvey
+
+This function generates some multilevel binary data.
+
+Arguments: 
+ 
+ - n_subj = number of subjects
+ 
+ - n_obs = total number of trials per subject
+ 
+ - alpha = veridical grand mean log odds performance
+ 
+ - beta1 = veridical effect of cond1
+ 
+ - beta2 = veridical effect of cond2
+ 
+ - beta3 = veridical cond1 * cond2 interaction effect
+ 
+ - subj_corrs = list of correlations between random effects
+ 
+ - subj_tau = list of SDs of random effects
+
+```{r}
+
+generate_bin <- function(n_subj, n_obs, alpha, beta1, beta2, beta3, subj_corrs, subj_tau) {
+  # make data frame where number of rows = number of subjects * number of trials per subject
+  data <- data.frame(matrix(0, ncol=0, nrow = n_subj * n_obs))
+  # make subject vector and add to this data frame
+  data$subject <- as.factor(rep(seq(1:n_subj), each = n_obs))
+  # make condition 1 vector - within subjects
+  # half trials one value, half trials the other
+  data$cond1 <- as.factor(rep(c(0,1), each = n_obs/2))
+  # make centred version
+  data$c_cond1 <- as.numeric(data$cond1) - mean(as.numeric(data$cond1))
+  # make condition 2 vector - also within subjects
+  # 1/4 trials one value, 1/4 trials the other, then repeat
+  # this ensures cond1 and cond2 are not identical
+  data$cond2 <- as.factor(rep(c(0,1), each = n_obs/4))
+  # make centred version
+  data$c_cond2 <- as.numeric(data$cond2) - mean(as.numeric(data$cond2))
+  # for subject effects
+  # first, we put the correlations between the random effects in a matrix
+  # * if changing to simulate fewer random effects & hence fewer correlations, 
+  # this will need to be adjusted
+  corr_matrix <- matrix(c(1, subj_corrs[1], subj_corrs[2], subj_corrs[3],
+                          subj_corrs[1], 1, subj_corrs[4], subj_corrs[5],
+                          subj_corrs[2], subj_corrs[4], 1, subj_corrs[6],
+                          subj_corrs[3], subj_corrs[5], subj_corrs[6], 1), nrow = 4)
+  # next, construct variance covariance matrix for subject effects
+  # We multiply the subject effect sds (in matrix form) by the correlation matrix
+  # and then again by the subject effect sds
+  # so we end up with the sds squared (on the diagonal) = variance, 
+  # and covariances between each pair of subject effects on the off-diagonal
+  # * if changing to simulate fewer random effects, this should still work fine,
+  # assuming corr_matrix has been adjusted appropriately
+  subj_v_cov <- diag(subj_tau) %*% corr_matrix %*% diag(subj_tau)
+  # Create the correlated subject effects, using mvrnorm to sample from multivariate normal distribution
+  # means of subject intercepts and slopes are 0
+  u <- mvrnorm(n = n_subj, c(0,0,0,0), subj_v_cov)
+  # check the correlation - this should be fairly accurate in large samples
+  # print(cor(u))
+  # check the SDs - again, should be fairly accurate in large samples
+  # print(sd(u[,1]))
+  # print(sd(u[,2]))
+  # print(sd(u[,3]))
+  # print(sd(u[,4]))
+  # finally, generate data on the basis of these parameters
+  data <- data %>%
+    mutate(
+      # We first calculate the linear predictor eta for each row in the data frame
+      # = overall intercept + subject intercept +
+      eta = alpha + u[data$subject,1] +
+        # cond1 value * (cond1 fixed effect + cond1 random slope) +
+        data$c_cond1 * (beta1 + u[data$subject,2]) + 
+        # cond2 value * (cond2 fixed effect + cond2 random slope) +
+        data$c_cond2 * (beta2 + u[data$subject,3]) +
+        # cond1 * cond2 value * (interaction fixed effect + interaction random slope) +
+        (data$c_cond1 * data$c_cond2) * (beta3 + u[data$subject,4]),
+      # then transform by inverse logit to a probability (for this combo of subject/condition)
+      mu = inv.logit(eta),
+      # finally, generate a 0 or 1 for this row based on the probability for this subject/condition
+      y = rbinom(nrow(data),1,mu))
+  return(data)
+}
+```
 
 ## getmode
 Author: [Tutorials point](https://www.tutorialspoint.com/r/r_mean_median_mode.htm).
@@ -382,6 +687,337 @@ getmode <- function(v) {
    uniqv[which.max(tabulate(match(v, uniqv)))]
 }
 ```
+
+## get_coeffs
+
+This function allows us to inspect particular coefficients from the output of an LME model by putting them in table.
+
+- x: the output returned when running lmer or glmer (i.e. an object of type lmerMod or glmerMod)
+
+- list: a list of the names of the coefficients to be extracted (e.g. c(“variable1”, “variable1:variable2”))
+
+```{r}
+get_coeffs <- function(x,list){(as.data.frame(summary(x)$coefficients)[list,])}
+```
+
+## inverse_log_odd
+
+It takes a log-odds value and calculates the proportion
+```{r}
+inverse_log_odd<-function(lo) {exp(lo)/(1 + exp(lo))} 
+
+```
+
+
+## lizCenter
+
+Author: Elizabeth Wonnacott.
+
+This function provides a wrapper around myCenter allowing to center a specific list of variables from a dataframe. 
+The input is a dataframe (x) and a list of the names of the variables which you wish to center (listfname).
+The output is a copy of the dataframe with a column (numeric) added for each of the centered variables with each one labelled with it's previous name with ".ct" appended. For example, if x is a dataframe with columns "a" and "b" lizCenter(x, list("a", "b")) will return a dataframe with two additional columns, a.ct and b.ct, which are numeric, centered codings of the corresponding variables.
+
+
+
+```{r lizCenter,message=FALSE, warning=FALSE}
+
+lizCenter= function(x, listfname) 
+{
+	for (i in 1:length(listfname)) 
+	{
+		fname = as.character(listfname[i])
+		x[paste(fname,".ct", sep="")] = myCenter(x[fname])
+	}
+		
+	return(x)
+}
+```	
+
+## lizCenter2
+This function provides a wrapper around lizCenter which removes rows with missing data in the the DV before centering- note the df will have less rows as well as the centered variables (so will need to be careful with this is working with multiple dvs).
+
+   * dv - a string which is the column name of the column in the dataframe with the dv
+
+   * x: data frame
+
+   * listfname: a list of the variables to be centered (e.g. list(variable1,variable2))
+
+The output is a copy of the data frame with a column (always a numeric variable) added for each of the centered variables. These columns are labeled with the column's previous name, but with ".ct" appended (e.g., "variable1" will become "variable1.ct").
+
+```{r}
+
+lizCenter2= function(x, listfname, dv) 
+{
+	  x= droplevels(subset(x, is.na(x[as.character(dv)])==FALSE))
+    x = lizCenter(x, listfname)
+	 
+	
+	return(x)
+}
+```
+
+## lizContrasts
+
+Author: Elizabeth Wonnacott.
+
+This function implements a [simple coding scheme](https://stats.idre.ucla.edu/r/library/r-library-contrast-coding-systems-for-categorical-variables/#SIMPLE). It creates two centered dummy variables which stand in place of a three way factor (condition). This allows us to inspect each contrast separately against a reference level, as well as their interactions with other factors. Other fixed effects in the model can be evaluated as the average effects across all levels of the factor. Note that the intercept corresponds to the mean of cell means, sometimes referred as grand mean.
+
+The function takes a data frame (d), a factor from that database (condition), which must have three levels, and the name of the level of the factor which is to be used as the baseline for the contrasts (baselevel).
+
+```{r}
+lizContrasts= function(d, condition, baselevel) 
+{
+ 
+    condition = factor(condition)
+ condition = relevel(condition, baselevel)
+
+    a= (contrasts(condition)-apply(contrasts(condition),2,mean))
+    d$dummy1[condition== rownames(a)[1]] <- a[1] 
+    d$dummy1[condition== rownames(a)[2]] <- a[2] 
+    d$dummy1[condition== rownames(a)[3]] <- a[3] 
+    
+    d$dummy2[condition== rownames(a)[1]] <- a[4] 
+    d$dummy2[condition== rownames(a)[2]] <- a[5] 
+    d$dummy2[condition== rownames(a)[3]] <- a[6] 
+
+    name1 = paste(baselevel, rownames(a)[2],sep="_VERSUS_")
+    name2 = paste(baselevel, rownames(a)[3],sep="_VERSUS_")
+
+    d[name1] = d$dummy1 
+    d[name2] = d$dummy2 
+
+    d$dummy1 <-NULL 
+    d$dummy2 <-NULL 
+    
+    return(d)
+}
+```
+
+
+## lizContrasts4
+
+Author: Elizabeth Wonnacott.
+
+This function is a version of the previous [lizContrasts](https://n400peanuts.github.io/languagelearninglab/usefulFunctions-explained.html#lizContrasts) function but to be used to create three centered dummy variables which stand in place of a four-way factor (condition). Notes that this function implements a [simple coding scheme](https://stats.idre.ucla.edu/r/library/r-library-contrast-coding-systems-for-categorical-variables/#SIMPLE). It creates three centered dummy variables which stand in place of a three way factor (condition). This allows us to inspect each contrast separately against a reference level, as well as their interactions with other factors. Other fixed effects in the model can be evaluated as the average effects across all levels of the factor. Note that the intercept corresponds to the mean of cell means, sometimes referred as grand mean.
+
+```{r}
+lizContrasts4= function(d, condition, baselevel) 
+{
+  #condition = pictest$condition
+  condition = factor(condition)
+  condition = relevel(condition, baselevel)
+  a= (contrasts(condition)-apply(contrasts(condition),2,mean))
+  
+  d$dummy1[condition== rownames(a)[1]] <- a[1] 
+  d$dummy1[condition== rownames(a)[2]] <- a[2] 
+  d$dummy1[condition== rownames(a)[3]] <- a[3] 
+  d$dummy1[condition== rownames(a)[4]] <- a[4] 
+  d$dummy2[condition== rownames(a)[1]] <- a[5] 
+  d$dummy2[condition== rownames(a)[2]] <- a[6] 
+  d$dummy2[condition== rownames(a)[3]] <- a[7] 
+  d$dummy2[condition== rownames(a)[4]] <- a[8] 
+  d$dummy3[condition== rownames(a)[1]] <- a[9] 
+  d$dummy3[condition== rownames(a)[2]] <- a[10] 
+  d$dummy3[condition== rownames(a)[3]] <- a[11] 
+  d$dummy3[condition== rownames(a)[4]] <- a[12] 
+  
+  name1 = paste(baselevel, rownames(a)[2],sep="_VERSUS_")
+  name2 = paste(baselevel, rownames(a)[3],sep="_VERSUS_")
+  name3 = paste(baselevel, rownames(a)[4],sep="_VERSUS_")
+  
+  d[name1] = d$dummy1 
+  d[name2] = d$dummy2 
+  d[name3] = d$dummy3 
+  
+  d$dummy1 <-NULL 
+  d$dummy2 <-NULL 
+  d$dummy3 <-NULL 
+  
+  return(d)
+}
+```
+
+## loadFunctionsGithub 
+
+Author: Eva Viviani.
+
+This function loads automatically all the functions stored in the */tools* folder. It requires three arguments: 
+
+- urlFolder that is the url of the github at the master tree level 
+
+- urlRaw, that is the raw address of the folder
+
+- listFunctions that is a vector containing the functions I want to download. If I want all of them, simply leave it empty, i.e., listFunctions <- NULL, otherwise specify the functions with the ".R" extention like this: e.g., listFunctions <- c("Bf.R","lizContrasts.R","getmode.R")
+
+
+```{r}
+urlFolder <- 'https://api.github.com/repos/n400peanuts/languagelearninglab/git/trees/master?recursive=1'
+urlRaw <- 'https://raw.githubusercontent.com/n400peanuts/languagelearninglab/master/tools/'
+listFunctions <- NULL #this needs to be a list, e.g., listFunctions <- c("Bf.R","lizContrasts.R","getmode.R")
+```
+
+```{r}
+loadFunctionsGithub <-function(urlFolder, urlRaw, listFunctions){
+  if (!require(httr)) {
+    stop("httr not installed")
+  } 
+  else if (!require(RCurl)){
+    stop("RCurl not installed") 
+  }
+  else {
+    print('----loading. Please wait----')
+  };
+  httr::GET(urlFolder)-> req
+  stop_for_status(req)
+  filelist <- unlist(lapply(content(req)$tree, "[", "path"), use.names = F)
+  urlFunctions <- grep("docs/tools/", filelist, value = TRUE, fixed = TRUE)
+  gsub("docs/tools/", "", urlFunctions) -> functions
+  if (length(listFunctions) == 0){ #load all
+    for (i in 1:length(functions)){
+      RCurl::getURL(paste0(urlRaw, functions[i]), ssl.verifypeer = FALSE)-> temp
+      eval(parse(text = temp), envir = .GlobalEnv)
+    } 
+  } else {
+      functions[functions %in% listFunctions]-> functionsIlike
+      for (i in 1:length(functionsIlike)){
+      RCurl::getURL(paste0(urlRaw, functionsIlike[i]), ssl.verifypeer = FALSE)-> temp
+      eval(parse(text = temp), envir = .GlobalEnv)
+    }
+  };
+}
+
+```
+
+## logodds
+This function takes a percentage p and returns the logodds value.
+
+```{r logodds}
+logodds <- function(p){log(p/(100-p))} 
+```
+
+
+
+
+## myCenter
+Author: [Florian Jaegers](https://hlplab.wordpress.com/2009/04/27/centering-several-variables/).
+
+This function outputs the centered values of a variable, which can be a numeric variable, a factor, or a data frame.
+
+From Florian's blog:
+
+- If the input is a numeric variable, the output is the centered variable.
+
+- If the input is a factor, the output is a numeric variable with centered factor level values. That is, the factor's levels are converted into numerical values in their inherent order (if not specified otherwise,  R defaults to alphanumerical order). More specifically, this centers any binary factor so that the value below 0 will be the 1st level of the original factor, and the value above 0 will be the 2nd level.
+
+- If the input is a data frame or matrix, the output is a new matrix of the same dimension and with the centered values and column names that correspond to the colnames() of the input preceded by "c" (e.g. "Variable1" will be "cVariable1").
+
+```{r myCenter,message=FALSE, warning=FALSE}
+
+myCenter <- function(x) {
+  if (is.numeric(x)) { return(x - mean(x, na.rm=T)) }
+	if (is.factor(x)) {
+		x= as.numeric(x)
+		return(x - mean(x, na.rm=T))
+	}
+	if (is.data.frame(x) || is.matrix(x)) {
+		m= matrix(nrow=nrow(x), ncol=ncol(x))
+		colnames(m)= paste("c", colnames(x), sep="")
+	
+		for (i in 1:ncol(x)) {
+		
+			m[,i]= myCenter(x[,i])
+		}
+		return(as.data.frame(m))
+	}
+}
+```
+
+## normDataWithin
+
+Author: [Cookbook for R](http://www.cookbook-r.com/Graphs/Plotting_means_and_error_bars_(ggplot2)/#Helper).
+
+This function is used by the SummarySEWithin function above.
+From that website:
+
+Norms the data within specified groups in a data frame; it normalizes each subject (identified by idvar) so that they have the same mean, within each group specified by betweenvars.
+
+- data: a data frame
+
+- idvar: the name of a column that identifies each subject (or matched subjects)
+
+- measurevar: the name of a column that contains the variable to be summarized
+
+- betweenvars: a vector containing names of columns that are between-subjects variables
+
+- na.rm: a boolean that indicates whether to ignore NA’s
+
+```{r}
+normDataWithin <- function(data=NULL, idvar, measurevar, betweenvars=NULL,
+                           na.rm=FALSE, .drop=TRUE) {
+    #library(plyr)
+
+    # Measure var on left, idvar + between vars on right of formula.
+    data.subjMean <- ddply(data, c(idvar, betweenvars), .drop=.drop,
+     .fun = function(xx, col, na.rm) {
+        c(subjMean = mean(xx[,col], na.rm=na.rm))
+      },
+      measurevar,
+      na.rm
+    )
+
+    # Put the subject means with original data
+    data <- merge(data, data.subjMean)
+
+    # Get the normalized data in a new column
+    measureNormedVar <- paste(measurevar, "_norm", sep="")
+    data[,measureNormedVar] <- data[,measurevar] - data[,"subjMean"] +
+                               mean(data[,measurevar], na.rm=na.rm)
+
+    # Remove this subject mean column
+    data$subjMean <- NULL
+
+    return(data)
+}
+```
+
+## num.decimals
+Author: Elizabeth Wonnacott
+
+```{r}
+num.decimals <- function(x) {
+    stopifnot(class(x)=="numeric")
+    x <- sub("0+$","",x)
+    x <- sub("^.+[.]","",x)
+    nchar(x)
+}
+```
+
+
+## percentage
+This function does the reverse of the function above.
+
+```{r}
+percentage <- function(logodds) {(exp(logodds)/(1+exp(logodds)) ) * 100}
+```
+
+
+## round_df
+Author: Elizabeth Wonnacott
+
+Take a data frame "df" and round any numeric column by to the number of dp given in digits.
+```{r}
+round_df <- function(df, digits) {
+    for(i in 1: ncol(df)){
+     
+      if (is.numeric(df[,i])) { 
+        df[,i]= round(df[,i],digits) }
+    }
+    
+    return(df)
+}
+```
+
+
 
 ## summarySE
 
@@ -509,539 +1145,20 @@ summarySEwithin <- function(data=NULL, measurevar, betweenvars=NULL, withinvars=
 }
 ```
 
-## normDataWithin
 
-Author: [Cookbook for R](http://www.cookbook-r.com/Graphs/Plotting_means_and_error_bars_(ggplot2)/#Helper).
 
-This function is used by the SummarySEWithin function above.
-From that website:
 
-Norms the data within specified groups in a data frame; it normalizes each subject (identified by idvar) so that they have the same mean, within each group specified by betweenvars.
 
-- data: a data frame
 
-- idvar: the name of a column that identifies each subject (or matched subjects)
 
-- measurevar: the name of a column that contains the variable to be summarized
 
-- betweenvars: a vector containing names of columns that are between-subjects variables
 
-- na.rm: a boolean that indicates whether to ignore NA’s
 
-```{r}
-normDataWithin <- function(data=NULL, idvar, measurevar, betweenvars=NULL,
-                           na.rm=FALSE, .drop=TRUE) {
-    #library(plyr)
 
-    # Measure var on left, idvar + between vars on right of formula.
-    data.subjMean <- ddply(data, c(idvar, betweenvars), .drop=.drop,
-     .fun = function(xx, col, na.rm) {
-        c(subjMean = mean(xx[,col], na.rm=na.rm))
-      },
-      measurevar,
-      na.rm
-    )
 
-    # Put the subject means with original data
-    data <- merge(data, data.subjMean)
 
-    # Get the normalized data in a new column
-    measureNormedVar <- paste(measurevar, "_norm", sep="")
-    data[,measureNormedVar] <- data[,measurevar] - data[,"subjMean"] +
-                               mean(data[,measurevar], na.rm=na.rm)
 
-    # Remove this subject mean column
-    data$subjMean <- NULL
 
-    return(data)
-}
-```
 
-## get_coeffs
 
-This function allows us to inspect particular coefficients from the output of an LME model by putting them in table.
-
-- x: the output returned when running lmer or glmer (i.e. an object of type lmerMod or glmerMod)
-
-- list: a list of the names of the coefficients to be extracted (e.g. c(“variable1”, “variable1:variable2”))
-
-```{r}
-get_coeffs <- function(x,list){(as.data.frame(summary(x)$coefficients)[list,])}
-```
-
-## lizContrasts
-
-Author: Elizabeth Wonnacott.
-
-This function implements a [simple coding scheme](https://stats.idre.ucla.edu/r/library/r-library-contrast-coding-systems-for-categorical-variables/#SIMPLE). It creates two centered dummy variables which stand in place of a three way factor (condition). This allows us to inspect each contrast separately against a reference level, as well as their interactions with other factors. Other fixed effects in the model can be evaluated as the average effects across all levels of the factor. Note that the intercept corresponds to the mean of cell means, sometimes referred as grand mean.
-
-The function takes a data frame (d), a factor from that database (condition), which must have three levels, and the name of the level of the factor which is to be used as the baseline for the contrasts (baselevel).
-
-```{r}
-lizContrasts= function(d, condition, baselevel) 
-{
- 
-    condition = factor(condition)
- condition = relevel(condition, baselevel)
-
-    a= (contrasts(condition)-apply(contrasts(condition),2,mean))
-    d$dummy1[condition== rownames(a)[1]] <- a[1] 
-    d$dummy1[condition== rownames(a)[2]] <- a[2] 
-    d$dummy1[condition== rownames(a)[3]] <- a[3] 
-    
-    d$dummy2[condition== rownames(a)[1]] <- a[4] 
-    d$dummy2[condition== rownames(a)[2]] <- a[5] 
-    d$dummy2[condition== rownames(a)[3]] <- a[6] 
-
-    name1 = paste(baselevel, rownames(a)[2],sep="_VERSUS_")
-    name2 = paste(baselevel, rownames(a)[3],sep="_VERSUS_")
-
-    d[name1] = d$dummy1 
-    d[name2] = d$dummy2 
-
-    d$dummy1 <-NULL 
-    d$dummy2 <-NULL 
-    
-    return(d)
-}
-```
-
-## Bf_model
-Author: Elizabeth Wonnacott
-
-This function calls the Bf function described above. Summary should be the coefficients summary from an lmer/gmer model (obtained via #summary(model)$coefficients). If its a lmer model, it expects there to be a columns "df" and "p" (i.e.summary function has been called using lmerTest package which applieds Kenward-Roger approximation for denominator degrees of freedom and computes p values).
-For each coefficient, the model uses the estimate as the obtained mean and the Std.Error as the measure of standard error.
-
-The function allows for positive and negtive h1 values. If negative, since the BF function requires a positive value for sdtheory, both sdtheory and #obtained are multiplied by -1.
-
-It doesn't round unless there is an argument "digits" which says how many dp to round to- in this case the round_df function below is called. 
-
-```{r}
-Bf_model <-function(coeff_summary, coeff_list, h1_list,h1_motivation, tail_list, digits = "")
-{
-  
-  Bfs = vector('double')
-  estimates = vector('double')
-  sterrors = vector('double')
-  sdtheorys = vector('double')
-  pvalues = vector('double')
-  tzvalues = vector('double')
-  
-  
-  #  i=2
-  for (i in 1:length(coeff_list)){
-    
-    sd_error = coeff_summary[coeff_list[i], "Std. Error"]
-    obtained = coeff_summary[coeff_list[i], "Estimate"]
-    stdtheory = h1_list[i]
-    
-    
-    if(h1_list[i] <0) {
-      stdtheory = h1_list[i]*-1
-      obtained = (coeff_summary[coeff_list[i], "Estimate"]*-1)}
-    
-    
-    Bfs[i] = Bf(sd_error, obtained, uniform = 0, meanoftheory = 0, sdtheory=stdtheory , tail = tail_list[i])$BayesFactor
-    estimates[i] = obtained
-    sdtheorys[i] = stdtheory
-    sterrors[i] = sd_error
-    if(colnames(coeff_summary)[3]=="z value") {
-      tzlabel = "z"
-      tzvalues[i]= abs(coeff_summary[coeff_list[i], 3])*sign(obtained)
-      pvalues[i] = coeff_summary[coeff_list[i], 4]  
-    } 
-    else if(colnames(coeff_summary)[3]=="df") {
-      tzlabel = "t"
-      tzvalues[i]= abs(coeff_summary[coeff_list[i], 4])*sign(obtained)
-      pvalues[i] = coeff_summary[coeff_list[i], 5]  
-    } 
-    
-  }
-  
-  df = data.frame(cbind(coeff_list, estimates, sterrors, tzvalues, pvalues, sdtheorys,  tail_list, Bfs,h1_motivation )   )
-  colnames(df) = c("coefficient", "estimate", "std.Error", tzlabel,"p","sdtheory", "BFtail", "Bf","h1 motivation" )
-  df$estimate = as.numeric(as.character(df$estimate))
-  df$std.Error = as.numeric(as.character(df$std.Error))
-  df$sdtheory = as.numeric(as.character(df$sdtheory))
-  
-  df$Bf = as.numeric(as.character(df$Bf))
-  df$p = as.numeric(as.character(df$p))
-  if (tzlabel== "z") {df$z = as.numeric(as.character(df$z))}
-  if (tzlabel== "t") {df$t = as.numeric(as.character(df$t))}
-  if (digits !=  "") {df = round_df(df, digits)}
-  return(df)
-  
-}
-
-```
-
-## round_df
-Author: Elizabeth Wonnacott
-
-Take a data frame "df" and round any numeric column by to the number of dp given in digits.
-```{r}
-round_df <- function(df, digits) {
-    for(i in 1: ncol(df)){
-     
-      if (is.numeric(df[,i])) { 
-        df[,i]= round(df[,i],digits) }
-    }
-    
-    return(df)
-}
-```
-
-## Bf_range
-Author: Elizabeth Wonnacott
-
-This works with the Bf function above. It requires the obtained mean and SE for the current sample and works out what the BF would be for a range of predicted means (which are set to be sdtheoryrange (with meanoftheory=0)).
-
-```{r}
-Bf_range<-function(sd, obtained, meanoftheory=0, sdtheoryrange, tail=1)
-{
-  
-  x = c(0)
-  y = c(0)
-  
-  for(sdi in sdtheoryrange)
-  {
-    #sdi = sdtheoryrange[1]
-    B = as.numeric(Bf(sd, obtained, meanoftheory=0, uniform = 0, sdtheory=sdi, tail)[3])
-    
-    #following line corrects for the fact that the calcuator does not correctly compute BF when sdtheory==0; this code ensures that if sdtheory ==0, BF=1
-    
-    if (sdi ==0 ) {B=1}
-    
-    x= append(x,sdi)  
-    y= append(y,B)
-    output = cbind(x,y)
-    
-  } 
-  output = output[-1,] 
-  colnames(output) = c("sdtheory", "BF")
-  return(output) 
-}
-
-```
-
-## addBf_ranges3
-Author: Elizabeth Wonnacott
-
-Similar to addBf_ranges2 except that it works out ranges by working down/up from the given sd_theory value in increments given by stepsizes up to maximum given by maxs. Stepsizes/maxs can either be a single value used across all the coefficients or can be a vector of values (one per row - size must match )
-
-```{r}
-addBf_ranges3 <-function(Bf_df, stepsizes, maxs)
-{
-  RRminV = vector()
-  RRmaxV = vector()
-  for (b in 1:dim(Bf_df)[1]){
-
-      #b=8
-
-    if (length(stepsizes)==1){stepsize = stepsizes} else {stepsize = stepsizes[b]}
-    if (length(maxs)==1){max = maxs} else {max = maxs[b]}
-
-    
-    Ndp = num.decimals(stepsize)
-    BF = as.numeric(as.character(Bf_df$Bf[b]))  
-    BType= BfClassify(BF) 
-    sdtheory = as.numeric(as.character(Bf_df$sdtheory[b]))  
-    sd = as.numeric(as.character(Bf_df$std.Error[b]))
-    obtained = as.numeric(as.character(Bf_df$estimate[b]))
-    tail = as.numeric(as.character(Bf_df$BFtail[b]))
-
-    # get the max RRmax 
-    RRmax = ""
-    lastsdtheory = sdtheory
-    newsdtheory = ""
-      while(newsdtheory<= max){
-        newsdtheory = lastsdtheory + stepsize
-        newBF = Bf(sd=sd, obtained=obtained, uniform = NULL, meanoftheory=0,sdtheory=newsdtheory, tail=tail)$BayesFactor
-        
-      if (BfClassify(newBF)!= BType) {
-        RRmax = format(round(lastsdtheory, Ndp))
-        break }
-      lastsdtheory = newsdtheory
-      }
-    
-    if(RRmax == "" & BType == "h0") {RRmax = "inf"}  
-    if(RRmax == "" & BType == "h1") {RRmax = paste(">", max, sep="")}  
-    if(RRmax == "" & BType == "ambig") {RRmax = paste(">", max, sep="")}  
-    
-    # get the min RRmin 
-    RRmin = ""
-    lastsdtheory = sdtheory
-    newsdtheory = lastsdtheory - stepsize
-    
-    while(newsdtheory > 0){
-      newBF = Bf(sd=sd, obtained=obtained, uniform = NULL, meanoftheory=0,sdtheory=newsdtheory, tail=tail)$BayesFactor
-        
-      if (BfClassify(newBF)!= BType) {
-        RRmin = format(round(lastsdtheory, Ndp))
-        break }
-      lastsdtheory = newsdtheory
-      newsdtheory = lastsdtheory-stepsize
-    }
-    
-    if(RRmin== "" & BType == "ambig") {RRmin = 0}  
-    if(RRmin== "" & BType == "h1") {RRmin = paste(" 0< & <", format(round(lastsdtheory,  Ndp), nsmall=Ndp), sep="")} 
-    if(RRmin== "" & BType == "h0") {RRmin = paste(" 0< & <", format(round(lastsdtheory,  Ndp), nsmall=Ndp), sep="")}  
-
-    RRminV[b] = RRmin
-    RRmaxV[b] = RRmax
-    
-  }
-  out = cbind(Bf_df, RRminV, RRmaxV)
-
-    colnames(out)[10:11]= c("RRmin","RRmax")
-
-  return(out)
-}
-
-```
-
-## num.decimals
-Author: Elizabeth Wonnacott
-
-```{r}
-num.decimals <- function(x) {
-    stopifnot(class(x)=="numeric")
-    x <- sub("0+$","",x)
-    x <- sub("^.+[.]","",x)
-    nchar(x)
-}
-```
-
-## BfClassify
-Author: Elizabeth Wonnacott
-
-Classifies a Bayes factors as substantial for h1/h0 or ambigious (is used by addBf_ranges3) is used by Bf_addranges function below
-```{r}
-BfClassify<-function(B)
-{
-  if(B<=(1/3)){ "h0"}
-  else if (B>=3) {"h1"}  
-  else {"ambig"}
-}
-```
-
-## inverse_log_odd
-
-It takes a log-odds value and calculates the proportion
-```{r}
-inverse_log_odd<-function(lo) {exp(lo)/(1 + exp(lo))} 
-
-```
-
-## deleteRandomRows
-
-This takes a dataframe (df) and an integer (n) and returns a df which has n rows randomly deleted
-```{r}
-deleteRandomRows = function(df,n){
-  indices <- sample(1:nrow(df), n)
-  df <- df[-indices,]
-  return(df)
-}
-```
-
-## generate_bin
-
-Author: Catriona Silvey
-
-This function generates some multilevel binary data.
-
-Arguments: 
- 
- - n_subj = number of subjects
- 
- - n_obs = total number of trials per subject
- 
- - alpha = veridical grand mean log odds performance
- 
- - beta1 = veridical effect of cond1
- 
- - beta2 = veridical effect of cond2
- 
- - beta3 = veridical cond1 * cond2 interaction effect
- 
- - subj_corrs = list of correlations between random effects
- 
- - subj_tau = list of SDs of random effects
-
-```{r}
-
-generate_bin <- function(n_subj, n_obs, alpha, beta1, beta2, beta3, subj_corrs, subj_tau) {
-  # make data frame where number of rows = number of subjects * number of trials per subject
-  data <- data.frame(matrix(0, ncol=0, nrow = n_subj * n_obs))
-  # make subject vector and add to this data frame
-  data$subject <- as.factor(rep(seq(1:n_subj), each = n_obs))
-  # make condition 1 vector - within subjects
-  # half trials one value, half trials the other
-  data$cond1 <- as.factor(rep(c(0,1), each = n_obs/2))
-  # make centred version
-  data$c_cond1 <- as.numeric(data$cond1) - mean(as.numeric(data$cond1))
-  # make condition 2 vector - also within subjects
-  # 1/4 trials one value, 1/4 trials the other, then repeat
-  # this ensures cond1 and cond2 are not identical
-  data$cond2 <- as.factor(rep(c(0,1), each = n_obs/4))
-  # make centred version
-  data$c_cond2 <- as.numeric(data$cond2) - mean(as.numeric(data$cond2))
-  # for subject effects
-  # first, we put the correlations between the random effects in a matrix
-  # * if changing to simulate fewer random effects & hence fewer correlations, 
-  # this will need to be adjusted
-  corr_matrix <- matrix(c(1, subj_corrs[1], subj_corrs[2], subj_corrs[3],
-                          subj_corrs[1], 1, subj_corrs[4], subj_corrs[5],
-                          subj_corrs[2], subj_corrs[4], 1, subj_corrs[6],
-                          subj_corrs[3], subj_corrs[5], subj_corrs[6], 1), nrow = 4)
-  # next, construct variance covariance matrix for subject effects
-  # We multiply the subject effect sds (in matrix form) by the correlation matrix
-  # and then again by the subject effect sds
-  # so we end up with the sds squared (on the diagonal) = variance, 
-  # and covariances between each pair of subject effects on the off-diagonal
-  # * if changing to simulate fewer random effects, this should still work fine,
-  # assuming corr_matrix has been adjusted appropriately
-  subj_v_cov <- diag(subj_tau) %*% corr_matrix %*% diag(subj_tau)
-  # Create the correlated subject effects, using mvrnorm to sample from multivariate normal distribution
-  # means of subject intercepts and slopes are 0
-  u <- mvrnorm(n = n_subj, c(0,0,0,0), subj_v_cov)
-  # check the correlation - this should be fairly accurate in large samples
-  # print(cor(u))
-  # check the SDs - again, should be fairly accurate in large samples
-  # print(sd(u[,1]))
-  # print(sd(u[,2]))
-  # print(sd(u[,3]))
-  # print(sd(u[,4]))
-  # finally, generate data on the basis of these parameters
-  data <- data %>%
-    mutate(
-      # We first calculate the linear predictor eta for each row in the data frame
-      # = overall intercept + subject intercept +
-      eta = alpha + u[data$subject,1] +
-        # cond1 value * (cond1 fixed effect + cond1 random slope) +
-        data$c_cond1 * (beta1 + u[data$subject,2]) + 
-        # cond2 value * (cond2 fixed effect + cond2 random slope) +
-        data$c_cond2 * (beta2 + u[data$subject,3]) +
-        # cond1 * cond2 value * (interaction fixed effect + interaction random slope) +
-        (data$c_cond1 * data$c_cond2) * (beta3 + u[data$subject,4]),
-      # then transform by inverse logit to a probability (for this combo of subject/condition)
-      mu = inv.logit(eta),
-      # finally, generate a 0 or 1 for this row based on the probability for this subject/condition
-      y = rbinom(nrow(data),1,mu))
-  return(data)
-}
-```
-
-## getmode
-
-Function to get the mode
-```{r}
-getmode <- function(v) {
-  uniqv <- unique(v)
-  uniqv[which.max(tabulate(match(v, uniqv)))]
-}
-
-```
-
-## adjust_intercept_model
-
-Function to adjust the intercept of the model 
-
-```{r}
-adjust_intercept_model<- function(model, chance, intercept_list = c("(Intercept)"))
-{
-  summary = summary(model)$coefficients
-  
-  for (i in 1:length(intercept_list)){
-    summary[intercept_list[i], "Estimate"] = summary[intercept_list[i], "Estimate"]- chance
-    summary[intercept_list[i], "z value"] =  summary[intercept_list[i], "Estimate"]/summary[intercept_list[i], "Std. Error"]
-    summary[intercept_list[i], "Pr(>|z|)"] =  p =2*pnorm(-abs(summary[intercept_list[i], "z value"])) }
-  
-  
-  summary[intercept_list[i], "Estimate"]
-  
-  
-  return(summary)
-  
-}
-
-```
-
-## download_from_Gorilla
-
-Author: Eva Viviani
-
-This function is a wrapper around [Ferenc Igali's script.](https://github.com/University-of-Sheffield-EduTech/data-endpoint-gorilla.io/blob/master/Preview_Downloader_Script.R?fbclid=IwAR2zI3ZHgFKqZchCI1yEghEaGXgoDtJ_Fr3OWOGG-Iz_ki6jk30clYG3aR8)
-
-It downloads the data from Gorilla automatically, provided that you set your Gorilla login credentials into R.
- 
-**TO SET YOUR GORILLA LOGIN CREDENTIALS:**
-Install "keyring" package and run in R the following lines:
-                      
- - keyring::key_set(service = "Gorilla",  username = "eva.viviani@education.ox.ac.uk") 
-
-Change the "username" with the email you use for login into Gorilla. Keyring package will ask and save your password within R. These information are passed into the function below to log into Gorilla and access your data. **Only if you have set your login credentials, you can run the "download_from_Gorilla" function below.**
-
-Arguments:
-
-- output: a character string with the name of the folder where the downloaded file is saved
-
-- ulr: a character string, or a vector of characters, with the links (starting with "https") that I want to download
-
-- myGorillaemail: the email that I use to log into Gorilla
-
-Example of how to use the function:
-```{r download_from_Gorilla example, eval=F}
-output <- c("C:/Users/...")
-previewDownloadFile <- read.csv("data.csv") #this is a preview file of the eyetracker zone that contains in the "Response" column my links. One for each trial.
-url <- previewDownloadFile[grepl("https", previewDownloadFile$Response),]$Response
-download_from_Gorilla(output, url, "eva.viviani@education.ox.ac.uk")
-```
-
-Function below:
-```{r download_from_Gorilla}
-download_from_Gorilla <-function(output, url, myGorillaemail){
-  if (!require(downloader)) {
-    stop("downloader not installed")
-  } else if (!require(keyring)){
-    stop("keyring not installed")
-  } else if (!require(httr)){
-    stop("httr not installed") 
-  } else {
-    print("------ start download -------")
-  };
-  
-  #---------------------- get credentials and login ----------------------------#
-  login <- list(
-      email = myGorillaemail, 
-     password = keyring::key_get("Gorilla", myGorillaemail))
-  login_res <- POST("https://gorilla.sc/api/login", body = login, encode = "form")
-   
-   #---------------------- cycle over the list of urls --------------------------#
-  for (i in 1:length(url)){
-    file_end <- ""
-    experiment_download_url <- GET(url[i])
-    content_type_you_need_to_save <- experiment_download_url$headers$`content-type`
-  
-    #------------------------- check content type -------------------------------# 
-    if (content_type_you_need_to_save == "text/csv") {
-      file_end <- ".csv"
-    } else if (content_type_you_need_to_save == "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet") {
-      file_end <- ".xlsx"
-    } else if (content_type_you_need_to_save == "audio/wav") {
-      file_end <- ".weba"
-    } else if (content_type_you_need_to_save == "video/webm;codecs=vp8") {
-      file_end <- ".webm"
-    }
-    
-    file_download_url <- experiment_download_url$url
-    file_name_saver <- paste0(substring(as.character(url[i]),54,nchar(as.character(url[i]))))
-    
-    #download the file
-    downloader::download(file_download_url, paste0(output, file_name_saver), mode = "wb", quiet = T)
-    print(paste0("file ",i))
-  }
-   print("------ download done -------")
-}
-```
 
