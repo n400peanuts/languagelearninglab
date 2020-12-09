@@ -840,7 +840,7 @@ listFunctions &lt;- NULL #this needs to be a list, e.g., listFunctions &lt;- c(&
 <div id="lizcontrasts" class="section level2">
 <h2>lizContrasts</h2>
 <p>Author: Elizabeth Wonnacott.</p>
-<p>This function can be used to create two centered dummy variables which stand in place of a three way factor (condition). This allows us to inspect each contrast separately, as well as their interactions with other factors. Other fixed effects in the model can be evaluated as the average effects across all levels of the factor.</p>
+<p>This function implements a <a href="https://stats.idre.ucla.edu/r/library/r-library-contrast-coding-systems-for-categorical-variables/#SIMPLE">simple coding scheme</a>. It creates two centered dummy variables which stand in place of a three way factor (condition). This allows us to inspect each contrast separately against a reference level, as well as their interactions with other factors. Other fixed effects in the model can be evaluated as the average effects across all levels of the factor. Note that the intercept corresponds to the mean of cell means, sometimes referred as grand mean.</p>
 <p>The function takes a data frame (d), a factor from that database (condition), which must have three levels, and the name of the level of the factor which is to be used as the baseline for the contrasts (baselevel).</p>
 <pre class="r"><code>lizContrasts= function(d, condition, baselevel) 
 {

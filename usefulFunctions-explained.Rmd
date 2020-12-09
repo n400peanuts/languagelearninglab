@@ -573,7 +573,7 @@ get_coeffs <- function(x,list){(as.data.frame(summary(x)$coefficients)[list,])}
 
 Author: Elizabeth Wonnacott.
 
-This function can be used to create two centered dummy variables which stand in place of a three way factor (condition). This allows us to inspect each contrast separately, as well as their interactions with other factors. Other fixed effects in the model can be evaluated as the average effects across all levels of the factor.
+This function implements a [simple coding scheme](https://stats.idre.ucla.edu/r/library/r-library-contrast-coding-systems-for-categorical-variables/#SIMPLE). It creates two centered dummy variables which stand in place of a three way factor (condition). This allows us to inspect each contrast separately against a reference level, as well as their interactions with other factors. Other fixed effects in the model can be evaluated as the average effects across all levels of the factor. Note that the intercept corresponds to the mean of cell means, sometimes referred as grand mean.
 
 The function takes a data frame (d), a factor from that database (condition), which must have three levels, and the name of the level of the factor which is to be used as the baseline for the contrasts (baselevel).
 
