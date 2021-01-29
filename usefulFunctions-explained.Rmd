@@ -861,9 +861,6 @@ loadFunctionsGithub <-function(urlFolder, urlRaw, listFunctions){
   if (!require(httr)) {
     stop("httr not installed")
   } 
-  else if (!require(XML)){
-    stop("XML not installed") 
-  }
   else {
     print('----Downloading. Please wait----')
   };
