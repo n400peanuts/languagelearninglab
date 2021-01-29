@@ -1106,11 +1106,8 @@ listFunctions &lt;- NULL #this needs to be a list, e.g., listFunctions &lt;- c(&
   if (!require(httr)) {
     stop(&quot;httr not installed&quot;)
   } 
-  else if (!require(RCurl)){
-    stop(&quot;RCurl not installed&quot;) 
-  }
   else {
-    print(&#39;----loading. Please wait----&#39;)
+    print(&#39;----Downloading. Please wait----&#39;)
   };
   httr::GET(urlFolder)-&gt; req
   stop_for_status(req)
@@ -1119,16 +1116,19 @@ listFunctions &lt;- NULL #this needs to be a list, e.g., listFunctions &lt;- c(&
   gsub(&quot;docs/tools/&quot;, &quot;&quot;, urlFunctions) -&gt; functions
   if (length(listFunctions) == 0){ #load all
     for (i in 1:length(functions)){
-      RCurl::getURL(paste0(urlRaw, functions[i]), ssl.verifypeer = FALSE)-&gt; temp
-      eval(parse(text = temp), envir = .GlobalEnv)
+      httr::GET(paste0(urlRaw, functions[i]), ssl.verifypeer = FALSE)-&gt; temp
+      content(temp)-&gt;p3
+      eval(parse(text = p3), envir = .GlobalEnv)
     } 
   } else {
-      functions[functions %in% listFunctions]-&gt; functionsIlike
-      for (i in 1:length(functionsIlike)){
-      RCurl::getURL(paste0(urlRaw, functionsIlike[i]), ssl.verifypeer = FALSE)-&gt; temp
-      eval(parse(text = temp), envir = .GlobalEnv)
+    functions[functions %in% listFunctions]-&gt; functionsIlike
+    for (i in 1:length(functionsIlike)){
+      httr::GET(paste0(urlRaw, functionsIlike[i]), ssl.verifypeer = FALSE)-&gt; temp
+      content(temp)-&gt;p3
+      eval(parse(text = p3), envir = .GlobalEnv)
     }
   };
+  print(&#39;----Download completed----&#39;)
 }</code></pre>
 </div>
 <div id="logodds" class="section level2">
