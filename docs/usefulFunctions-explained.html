@@ -13,7 +13,7 @@
 
 <title>Functions frequently used</title>
 
-<script src="site_libs/header-attrs-2.7/header-attrs.js"></script>
+<script src="site_libs/header-attrs-2.10/header-attrs.js"></script>
 <script src="site_libs/jquery-1.11.3/jquery.min.js"></script>
 <meta name="viewport" content="width=device-width, initial-scale=1" />
 <link href="site_libs/bootstrap-3.3.5/css/cosmo.min.css" rel="stylesheet" />
@@ -295,12 +295,12 @@ div.tocify {
 
 <!-- setup 3col/9col grid for toc_float and main content  -->
 <div class="row">
-<div class="col-sm-12 col-md-4 col-lg-3">
+<div class="col-xs-12 col-sm-4 col-md-3">
 <div id="TOC" class="tocify">
 </div>
 </div>
 
-<div class="toc-content col-sm-12 col-md-8 col-lg-9">
+<div class="toc-content col-xs-12 col-sm-8 col-md-9">
 
 
 
@@ -491,15 +491,54 @@ div.tocify {
 </div>
 <div id="bayesfactor-updated" class="section level2">
 <h2>BayesFactor <em>updated</em></h2>
-<p>Author: <a href="http://www.lifesci.sussex.ac.uk/home/Zoltan_Dienes/inference/Bence%20Bayes%20factor%20calculator.html">Bence Palfi</a>.</p>
+<p>Author of the new version: <a href="http://www.lifesci.sussex.ac.uk/home/Zoltan_Dienes/inference/Bence%20Bayes%20factor%20calculator.html">Bence Palfi</a>.</p>
+<p>Author of the old version: <a href="http://www.academia.edu/427288/Review_of_Understanding_psychology_as_a_science_An_introduction_to_scientific_and_statistical_inference">Baguely and Kayne (2010)</a>.</p>
+<p>This function computes the Bayes Factor and it’s equivalent to the <a href="http://www.lifesci.sussex.ac.uk/home/Zoltan_Dienes/inference/Bayes.htm">Dienes (2008) calculator</a>.</p>
+<p>Integration of new and old versions is made available by Catriona Silvey on 16.04.2021</p>
 <p>The BF function has been updated recently. The novel function has options for a likelihood that is either normal- or t-distributed, and a model of H1 that is either uniform, or normal or t- (or Cauchy-) distributed, with the normal/t/cauchy models being 1- or 2-tailed. In addition, the 1-tailed models are compatible with any mode (unlike the Dienes, 2008, calculator that assumed that 1-tailed models had a mode of zero).</p>
-<pre class="r"><code>Bf&lt;-function(sd, obtained, dfdata = 1, likelihood = c(&quot;normal&quot;, &quot;t&quot;), 
-                    modeloftheory= c(&quot;normal&quot;,&quot;t&quot;,&quot;cauchy&quot;, &quot;uniform&quot;) ,lower =0, 
-                    upper=1, modeoftheory = 0, scaleoftheory = 1, dftheory = 1, tail = 2)
-{
-  if(likelihood==&quot;normal&quot;){
-    dfdata=10^10
-  }
+<p>The Bf function incorporates both old and new methods (Baguley &amp; Kaye, 2010, and Bence Palfi’s more recent version). By default, uses B&amp;K version (for backward compatibility) if using Palfi version, specify method = “new”.</p>
+<pre class="r"><code>Bf&lt;- function(sd, obtained, dfdata = 1, likelihood = c(&quot;normal&quot;, &quot;t&quot;), 
+               modeloftheory = c(&quot;normal&quot;, &quot;t&quot;, &quot;cauchy&quot;, &quot;uniform&quot;), uniform, 
+               lower=0, upper=1, meanoftheory=0, sdtheory=1, modeoftheory =0, scaleoftheory = 1, 
+               dftheory = 1, tail=1, method = &quot;old&quot;){
+  if (method == &quot;old&quot;) {
+    area &lt;- 0
+    if(identical(uniform, 1)){
+      theta &lt;- lower
+      range &lt;- upper - lower
+      incr &lt;- range / 2000
+      for (A in -1000:1000){
+        theta &lt;- theta + incr
+        dist_theta &lt;- 1 / range
+        height &lt;- dist_theta * dnorm(obtained, theta, sd)
+        area &lt;- area + height * incr
+      }
+    }else
+    {theta &lt;- meanoftheory - 5 * sdtheory
+    incr &lt;- sdtheory / 200
+    for (A in -1000:1000){
+      theta &lt;- theta + incr
+      dist_theta &lt;- dnorm(theta, meanoftheory, sdtheory)
+      if(identical(tail, 1)){
+        if (theta &lt;= 0){
+          dist_theta &lt;- 0
+        } else {
+          dist_theta &lt;- dist_theta * 2
+        }
+      }
+      height &lt;- dist_theta * dnorm(obtained, theta, sd)
+      area &lt;- area + height * incr
+    }
+    }
+    LikelihoodTheory &lt;- area
+    Likelihoodnull &lt;- dnorm(obtained, 0, sd)
+    BayesFactor &lt;- LikelihoodTheory / Likelihoodnull
+    ret &lt;- list(&quot;LikelihoodTheory&quot; = LikelihoodTheory,&quot;Likelihoodnull&quot; = Likelihoodnull, &quot;BayesFactor&quot; = BayesFactor)
+    ret
+  } else if (method == &quot;new&quot;) {
+    if(likelihood==&quot;normal&quot;){
+      dfdata=10^10
+    }
   if(modeloftheory==&quot;normal&quot;){
     dftheory = 10^10
   } else if(modeloftheory==&quot;cauchy&quot;){
@@ -540,47 +579,8 @@ div.tocify {
   Likelihoodnull &lt;- dt(obtained/sd, df = dfdata)
   BayesFactor &lt;- LikelihoodTheory/Likelihoodnull
   BayesFactor
+  }
 }</code></pre>
-</div>
-<div id="bf" class="section level2">
-<h2>Bf</h2>
-<p>Author: <a href="http://www.academia.edu/427288/Review_of_Understanding_psychology_as_a_science_An_introduction_to_scientific_and_statistical_inference">Baguely and Kayne (2010)</a>.</p>
-<p>This function computes the Bayes Factor and it’s equivalent to the <a href="http://www.lifesci.sussex.ac.uk/home/Zoltan_Dienes/inference/Bayes.htm">Dienes (2008) calculator</a>.</p>
-<pre class="r"><code>Bf_old&lt;-function(sd, obtained, uniform, lower=0, upper=1, meanoftheory=0,sdtheory=1, tail=1){
-  area &lt;- 0
-  if(identical(uniform, 1)){
-    theta &lt;- lower
-    range &lt;- upper - lower
-    incr &lt;- range / 2000
-    for (A in -1000:1000){
-      theta &lt;- theta + incr
-      dist_theta &lt;- 1 / range
-      height &lt;- dist_theta * dnorm(obtained, theta, sd)
-      area &lt;- area + height * incr
-    }
-  }else
-  {theta &lt;- meanoftheory - 5 * sdtheory
-  incr &lt;- sdtheory / 200
-  for (A in -1000:1000){
-    theta &lt;- theta + incr
-    dist_theta &lt;- dnorm(theta, meanoftheory, sdtheory)
-    if(identical(tail, 1)){
-      if (theta &lt;= 0){
-        dist_theta &lt;- 0
-      } else {
-        dist_theta &lt;- dist_theta * 2
-      }
-    }
-    height &lt;- dist_theta * dnorm(obtained, theta, sd)
-    area &lt;- area + height * incr
-  }
-  }
-  LikelihoodTheory &lt;- area
-  Likelihoodnull &lt;- dnorm(obtained, 0, sd)
-  BayesFactor &lt;- LikelihoodTheory / Likelihoodnull
-  ret &lt;- list(&quot;LikelihoodTheory&quot; = LikelihoodTheory,&quot;Likelihoodnull&quot; = Likelihoodnull, &quot;BayesFactor&quot; = BayesFactor)
-  ret
-} </code></pre>
 </div>
 <div id="bfclassify" class="section level2">
 <h2>BfClassify</h2>
@@ -679,28 +679,58 @@ div.tocify {
 </div>
 <div id="bf_range" class="section level2">
 <h2>Bf_range</h2>
-<p>Author: Elizabeth Wonnacott</p>
-<p>This works with the Bf function above. It requires the obtained mean and SE for the current sample and works out what the BF would be for a range of predicted means (which are set to be sdtheoryrange (with meanoftheory=0)).</p>
-<pre class="r"><code>Bf_range&lt;-function(sd, obtained, meanoftheory=0, sdtheoryrange, tail=1)
+<p>Author: Elizabeth Wonnacott Updated by: Catriona Silvey on 16.04.2021</p>
+<p>This works with the Bf function above. It requires the obtained mean and SE for the current sample and works out what the BF would be for a range of predicted means (which are set to be sdtheoryrange (with meanoftheory=0)). Bf_range function can be used with both old and new versions of Bf function. By default, uses old version (for backward compatibility) if using new version, specify method = “new”</p>
+<pre class="r"><code>Bf_range &lt;- function(sd, obtained, dfdata = 1, likelihood = c(&quot;normal&quot;, &quot;t&quot;), 
+         modeloftheory= c(&quot;normal&quot;,&quot;t&quot;,&quot;cauchy&quot;) , meanoftheory = 0,
+         modeoftheory = 0, sdtheoryrange, dftheory = 1, tail = 1, method = &quot;old&quot;)
 {
-  
-  x = c(0)
-  y = c(0)
-  
-  for(sdi in sdtheoryrange)
-  {
-    #sdi = sdtheoryrange[1]
-    B = as.numeric(Bf(sd, obtained, meanoftheory=0, uniform = 0, sdtheory=sdi, tail)[3])
+  if (method == &quot;old&quot;) {
     
-    #following line corrects for the fact that the calcuator does not correctly compute BF when sdtheory==0; this code ensures that if sdtheory ==0, BF=1
+    x = c(0)
+    y = c(0)
     
-    if (sdi ==0 ) {B=1}
+    for(sdi in sdtheoryrange)
+    {
+      #sdi = sdtheoryrange[1]
+      # uses old Bf method
+      B = as.numeric(Bf(sd, obtained, meanoftheory=0, uniform = 0, sdtheory=sdi, tail)[3])
+      
+      #following line corrects for the fact that the calcuator does not correctly compute BF when sdtheory==0; this code ensures that if sdtheory ==0, BF=1
+      
+      if (sdi ==0 ) {B=1}
+      
+      x= append(x,sdi)  
+      y= append(y,B)
+      output = cbind(x,y)
+
+  }
     
-    x= append(x,sdi)  
-    y= append(y,B)
-    output = cbind(x,y)
+  }
+  else if (method == &quot;new&quot;) {
     
-  } 
+    x = c(0)
+    y = c(0)
+    
+    for(sdi in sdtheoryrange)
+    {
+      #sdi = sdtheoryrange[1]
+      # uses new Bf method
+      B = as.numeric(Bf(sd = sd, obtained = obtained, dfdata = dfdata, likelihood = likelihood, 
+                        modeloftheory = modeloftheory, modeoftheory=modeoftheory, scaleoftheory=sdi, 
+                        dftheory = dftheory, tail = tail, method=&quot;new&quot;))
+      
+      #following line corrects for the fact that the calcuator does not correctly compute BF when sdtheory==0; this code ensures that if sdtheory ==0, BF=1
+      
+      if (sdi ==0 ) {B=1}
+      
+      x= append(x,sdi)  
+      y= append(y,B)
+      output = cbind(x,y)
+
+    }
+    
+  }
   output = output[-1,] 
   colnames(output) = c(&quot;sdtheory&quot;, &quot;BF&quot;)
   return(output) 
@@ -754,6 +784,47 @@ div.tocify {
   return(df)
   
   kable(df)
+}</code></pre>
+</div>
+<div id="confidence-interval-calculators-95-ci" class="section level2">
+<h2>confidence interval calculators (95% CI)</h2>
+<p>lower_ci.R and upper_ci.R are functions made available publicly in this <a href="https://community.rstudio.com/t/computing-confidence-intervals-with-dplyr/31868">Rcommunity post</a></p>
+<p>Example of how to use it::</p>
+<pre class="r"><code>library(tidyverse)
+test &lt;- data.frame(
+           n = c(298, 298, 298, 298, 298, 298, 298, 298, 298, 298, 1, 1, 1, 1,
+                 1, 1, 1, 1, 1, 1, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3),
+         run = c(1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10,
+                 1, 2, 3, 4, 5, 6, 7, 8, 9, 10),
+         mAP = c(0.8112, 0.8006, 0.8076, 0.7999, 0.8067, 0.8046, 0.8004, 0.799,
+                 0.8052, 0.8002, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0.8333, 0.8333,
+                 0.8333, 1, 0.8333, 1, 1, 0.8333, 1, 1)
+)
+
+lower_ci &lt;- function(mean, se, n, conf_level = 0.95){
+  lower_ci &lt;- mean - qt(1 - ((1 - conf_level) / 2), n - 1) * se
+}
+
+upper_ci &lt;- function(mean, se, n, conf_level = 0.95){
+  upper_ci &lt;- mean + qt(1 - ((1 - conf_level) / 2), n - 1) * se
+}
+
+foobar &lt;- test %&gt;%
+ group_by(n) %&gt;%
+  summarise(smean = mean(mAP, na.rm = TRUE),
+            ssd = sd(mAP, na.rm = TRUE)) %&gt;%
+  mutate(se = ssd / sqrt(n),
+         lower_ci = lower_ci(smean, se, n),
+         upper_ci = upper_ci(smean, se, n))
+         
+foobar         </code></pre>
+<p>Functions below:</p>
+<pre class="r"><code>lower_ci &lt;- function(mean, se, n, conf_level = 0.95){
+  lower_ci &lt;- mean - qt(1 - ((1 - conf_level) / 2), n - 1) * se
+}
+
+upper_ci &lt;- function(mean, se, n, conf_level = 0.95){
+  upper_ci &lt;- mean + qt(1 - ((1 - conf_level) / 2), n - 1) * se
 }</code></pre>
 </div>
 <div id="deleterandomrows" class="section level2">
@@ -1382,6 +1453,9 @@ $(document).ready(function () {
 
 <script>
 $(document).ready(function ()  {
+
+    // temporarily add toc-ignore selector to headers for the consistency with Pandoc
+    $('.unlisted.unnumbered').addClass('toc-ignore')
 
     // move toc-ignore selectors from section div to header
     $('div.section.toc-ignore')

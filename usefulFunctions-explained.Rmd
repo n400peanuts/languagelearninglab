@@ -171,19 +171,62 @@ adjust_intercept_model<- function(model, chance, intercept_list = c("(Intercept)
 
 ## BayesFactor *updated*
 
-Author: [Bence Palfi](http://www.lifesci.sussex.ac.uk/home/Zoltan_Dienes/inference/Bence%20Bayes%20factor%20calculator.html).
+Author of the new version: [Bence Palfi](http://www.lifesci.sussex.ac.uk/home/Zoltan_Dienes/inference/Bence%20Bayes%20factor%20calculator.html).
+
+Author of the old version: [Baguely and Kayne (2010)](http://www.academia.edu/427288/Review_of_Understanding_psychology_as_a_science_An_introduction_to_scientific_and_statistical_inference).
+
+This function computes the Bayes Factor and it's equivalent to the [Dienes (2008) calculator](http://www.lifesci.sussex.ac.uk/home/Zoltan_Dienes/inference/Bayes.htm).
+
+Integration of new and old versions is made available by Catriona Silvey on 16.04.2021
 
 The BF function has been updated recently. The novel function has options for a likelihood that is either normal- or t-distributed, and a model of H1 that is either uniform, or normal or t- (or Cauchy-) distributed, with the normal/t/cauchy models being 1- or 2-tailed. In addition, the 1-tailed models are compatible with any mode (unlike the Dienes, 2008, calculator that assumed that 1-tailed models had a mode of zero).  
 
+The Bf function incorporates both old and new methods (Baguley & Kaye, 2010, and Bence Palfi's more recent version). By default, uses B&K version (for backward compatibility) if using Palfi version, specify method = "new".
+
 ```{r}
 
-Bf<-function(sd, obtained, dfdata = 1, likelihood = c("normal", "t"), 
-                    modeloftheory= c("normal","t","cauchy", "uniform") ,lower =0, 
-                    upper=1, modeoftheory = 0, scaleoftheory = 1, dftheory = 1, tail = 2)
-{
-  if(likelihood=="normal"){
-    dfdata=10^10
-  }
+Bf<- function(sd, obtained, dfdata = 1, likelihood = c("normal", "t"), 
+               modeloftheory = c("normal", "t", "cauchy", "uniform"), uniform, 
+               lower=0, upper=1, meanoftheory=0, sdtheory=1, modeoftheory =0, scaleoftheory = 1, 
+               dftheory = 1, tail=1, method = "old"){
+  if (method == "old") {
+    area <- 0
+    if(identical(uniform, 1)){
+      theta <- lower
+      range <- upper - lower
+      incr <- range / 2000
+      for (A in -1000:1000){
+        theta <- theta + incr
+        dist_theta <- 1 / range
+        height <- dist_theta * dnorm(obtained, theta, sd)
+        area <- area + height * incr
+      }
+    }else
+    {theta <- meanoftheory - 5 * sdtheory
+    incr <- sdtheory / 200
+    for (A in -1000:1000){
+      theta <- theta + incr
+      dist_theta <- dnorm(theta, meanoftheory, sdtheory)
+      if(identical(tail, 1)){
+        if (theta <= 0){
+          dist_theta <- 0
+        } else {
+          dist_theta <- dist_theta * 2
+        }
+      }
+      height <- dist_theta * dnorm(obtained, theta, sd)
+      area <- area + height * incr
+    }
+    }
+    LikelihoodTheory <- area
+    Likelihoodnull <- dnorm(obtained, 0, sd)
+    BayesFactor <- LikelihoodTheory / Likelihoodnull
+    ret <- list("LikelihoodTheory" = LikelihoodTheory,"Likelihoodnull" = Likelihoodnull, "BayesFactor" = BayesFactor)
+    ret
+  } else if (method == "new") {
+    if(likelihood=="normal"){
+      dfdata=10^10
+    }
   if(modeloftheory=="normal"){
     dftheory = 10^10
   } else if(modeloftheory=="cauchy"){
@@ -224,54 +267,11 @@ Bf<-function(sd, obtained, dfdata = 1, likelihood = c("normal", "t"),
   Likelihoodnull <- dt(obtained/sd, df = dfdata)
   BayesFactor <- LikelihoodTheory/Likelihoodnull
   BayesFactor
+  }
 }
  
 ```
 
-## Bf
-
-Author: [Baguely and Kayne (2010)](http://www.academia.edu/427288/Review_of_Understanding_psychology_as_a_science_An_introduction_to_scientific_and_statistical_inference).
-
-This function computes the Bayes Factor and it's equivalent to the [Dienes (2008) calculator](http://www.lifesci.sussex.ac.uk/home/Zoltan_Dienes/inference/Bayes.htm).
-
-```{r BayesFactor, message=FALSE, warning=FALSE}
-
-Bf_old<-function(sd, obtained, uniform, lower=0, upper=1, meanoftheory=0,sdtheory=1, tail=1){
-  area <- 0
-  if(identical(uniform, 1)){
-    theta <- lower
-    range <- upper - lower
-    incr <- range / 2000
-    for (A in -1000:1000){
-      theta <- theta + incr
-      dist_theta <- 1 / range
-      height <- dist_theta * dnorm(obtained, theta, sd)
-      area <- area + height * incr
-    }
-  }else
-  {theta <- meanoftheory - 5 * sdtheory
-  incr <- sdtheory / 200
-  for (A in -1000:1000){
-    theta <- theta + incr
-    dist_theta <- dnorm(theta, meanoftheory, sdtheory)
-    if(identical(tail, 1)){
-      if (theta <= 0){
-        dist_theta <- 0
-      } else {
-        dist_theta <- dist_theta * 2
-      }
-    }
-    height <- dist_theta * dnorm(obtained, theta, sd)
-    area <- area + height * incr
-  }
-  }
-  LikelihoodTheory <- area
-  Likelihoodnull <- dnorm(obtained, 0, sd)
-  BayesFactor <- LikelihoodTheory / Likelihoodnull
-  ret <- list("LikelihoodTheory" = LikelihoodTheory,"Likelihoodnull" = Likelihoodnull, "BayesFactor" = BayesFactor)
-  ret
-} 
-```
 
 ## BfClassify
 Author: Elizabeth Wonnacott
@@ -384,30 +384,63 @@ Bf_powercalc<-function(sd, obtained, uniform, lower=0, upper=1, meanoftheory=0, 
 
 ## Bf_range
 Author: Elizabeth Wonnacott
+Updated by: Catriona Silvey on 16.04.2021
 
 This works with the Bf function above. It requires the obtained mean and SE for the current sample and works out what the BF would be for a range of predicted means (which are set to be sdtheoryrange (with meanoftheory=0)).
+Bf_range function can be used with both old and new versions of Bf function. By default, uses old version (for backward compatibility) if using new version, specify method = "new"
+
 
 ```{r}
-Bf_range<-function(sd, obtained, meanoftheory=0, sdtheoryrange, tail=1)
+Bf_range <- function(sd, obtained, dfdata = 1, likelihood = c("normal", "t"), 
+         modeloftheory= c("normal","t","cauchy") , meanoftheory = 0,
+         modeoftheory = 0, sdtheoryrange, dftheory = 1, tail = 1, method = "old")
 {
-  
-  x = c(0)
-  y = c(0)
-  
-  for(sdi in sdtheoryrange)
-  {
-    #sdi = sdtheoryrange[1]
-    B = as.numeric(Bf(sd, obtained, meanoftheory=0, uniform = 0, sdtheory=sdi, tail)[3])
+  if (method == "old") {
     
-    #following line corrects for the fact that the calcuator does not correctly compute BF when sdtheory==0; this code ensures that if sdtheory ==0, BF=1
+    x = c(0)
+    y = c(0)
     
-    if (sdi ==0 ) {B=1}
+    for(sdi in sdtheoryrange)
+    {
+      #sdi = sdtheoryrange[1]
+      # uses old Bf method
+      B = as.numeric(Bf(sd, obtained, meanoftheory=0, uniform = 0, sdtheory=sdi, tail)[3])
+      
+      #following line corrects for the fact that the calcuator does not correctly compute BF when sdtheory==0; this code ensures that if sdtheory ==0, BF=1
+      
+      if (sdi ==0 ) {B=1}
+      
+      x= append(x,sdi)  
+      y= append(y,B)
+      output = cbind(x,y)
+
+  }
     
-    x= append(x,sdi)  
-    y= append(y,B)
-    output = cbind(x,y)
+  }
+  else if (method == "new") {
     
-  } 
+    x = c(0)
+    y = c(0)
+    
+    for(sdi in sdtheoryrange)
+    {
+      #sdi = sdtheoryrange[1]
+      # uses new Bf method
+      B = as.numeric(Bf(sd = sd, obtained = obtained, dfdata = dfdata, likelihood = likelihood, 
+                        modeloftheory = modeloftheory, modeoftheory=modeoftheory, scaleoftheory=sdi, 
+                        dftheory = dftheory, tail = tail, method="new"))
+      
+      #following line corrects for the fact that the calcuator does not correctly compute BF when sdtheory==0; this code ensures that if sdtheory ==0, BF=1
+      
+      if (sdi ==0 ) {B=1}
+      
+      x= append(x,sdi)  
+      y= append(y,B)
+      output = cbind(x,y)
+
+    }
+    
+  }
   output = output[-1,] 
   colnames(output) = c("sdtheory", "BF")
   return(output) 
@@ -472,6 +505,60 @@ Bf_set <-function(names_list, meandiff_list, sd_list,  h1_list, tail_list)
   kable(df)
 }
 ```
+
+## confidence interval calculators (95% CI)
+
+lower_ci.R and upper_ci.R are functions made available publicly in this [Rcommunity post](https://community.rstudio.com/t/computing-confidence-intervals-with-dplyr/31868)
+
+Example of how to use it::
+
+```{r, eval=FALSE}
+
+library(tidyverse)
+test <- data.frame(
+           n = c(298, 298, 298, 298, 298, 298, 298, 298, 298, 298, 1, 1, 1, 1,
+                 1, 1, 1, 1, 1, 1, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3),
+         run = c(1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10,
+                 1, 2, 3, 4, 5, 6, 7, 8, 9, 10),
+         mAP = c(0.8112, 0.8006, 0.8076, 0.7999, 0.8067, 0.8046, 0.8004, 0.799,
+                 0.8052, 0.8002, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0.8333, 0.8333,
+                 0.8333, 1, 0.8333, 1, 1, 0.8333, 1, 1)
+)
+
+lower_ci <- function(mean, se, n, conf_level = 0.95){
+  lower_ci <- mean - qt(1 - ((1 - conf_level) / 2), n - 1) * se
+}
+
+upper_ci <- function(mean, se, n, conf_level = 0.95){
+  upper_ci <- mean + qt(1 - ((1 - conf_level) / 2), n - 1) * se
+}
+
+foobar <- test %>%
+ group_by(n) %>%
+  summarise(smean = mean(mAP, na.rm = TRUE),
+            ssd = sd(mAP, na.rm = TRUE)) %>%
+  mutate(se = ssd / sqrt(n),
+         lower_ci = lower_ci(smean, se, n),
+         upper_ci = upper_ci(smean, se, n))
+         
+foobar         
+
+```
+
+
+Functions below:
+```{r}
+lower_ci <- function(mean, se, n, conf_level = 0.95){
+  lower_ci <- mean - qt(1 - ((1 - conf_level) / 2), n - 1) * se
+}
+
+upper_ci <- function(mean, se, n, conf_level = 0.95){
+  upper_ci <- mean + qt(1 - ((1 - conf_level) / 2), n - 1) * se
+}
+```
+
+
+
 
 ## deleteRandomRows
 
