@@ -1383,6 +1383,20 @@ listFunctions &lt;- NULL #this needs to be a list, e.g., listFunctions &lt;- c(&
   merge(datac, ndatac)
 }</code></pre>
 </div>
+<div id="summarysewithin2" class="section level2">
+<h2>summarySEwithin2</h2>
+<p>Author: Elizabeth Wonnacott</p>
+<p>this is a wrapper around summarySEwithin (above); it adds the confidence intervals and groupmean into the original dataframe, rather than into a new dataframe, which makes it possible to include these in a violin plot</p>
+<pre class="r"><code>summarySEwithin2&lt;- function(data=NULL, measurevar, betweenvars=NULL, withinvars=NULL,
+                            idvar=NULL, na.rm=FALSE, conf.interval=.95, .drop=TRUE){
+
+data2 = summarySEwithin(data=data, measurevar= measurevar, betweenvars=betweenvars, withinvars=withinvars,
+                            idvar=idvar,na.rm=na.rm, conf.interval=conf.interval, .drop=.drop)
+colnames(data2)[colnames(data2)==measurevar] &lt;- &quot;groupmean&quot;
+out = merge(data,data2)
+return(out)
+} </code></pre>
+</div>
 
 
 
