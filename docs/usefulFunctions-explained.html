@@ -1023,6 +1023,12 @@ download_from_Gorilla(output, url, &quot;eva.viviani@education.ox.ac.uk&quot;)</
 </ul>
 <pre class="r"><code>get_coeffs &lt;- function(x,list){(as.data.frame(summary(x)$coefficients)[list,])}</code></pre>
 </div>
+<div id="get_coeffs2" class="section level2">
+<h2>get_coeffs2</h2>
+<p>outputs a set of specific coefficients for an lmer model</p>
+<p>x must match the form summary(lmermodel)$coefficients as applied to the output of an lmermodel. List should be a list of the coefficients which should be reported.</p>
+<pre class="r"><code>get_coeffs2 &lt;- function(x,list){(x[list,])}</code></pre>
+</div>
 <div id="inverse_log_odd" class="section level2">
 <h2>inverse_log_odd</h2>
 <p>It takes a log-odds value and calculates the proportion</p>
