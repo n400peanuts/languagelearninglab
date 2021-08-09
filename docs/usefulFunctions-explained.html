@@ -680,7 +680,8 @@ div.tocify {
 <div id="bf_range" class="section level2">
 <h2>Bf_range</h2>
 <p>Author: Elizabeth Wonnacott Updated by: Catriona Silvey on 16.04.2021</p>
-<p>This works with the Bf function above. It requires the obtained mean and SE for the current sample and works out what the BF would be for a range of predicted means (which are set to be sdtheoryrange (with meanoftheory=0)). Bf_range function can be used with both old and new versions of Bf function. By default, uses old version (for backward compatibility) if using new version, specify method = “new”</p>
+<p>This works with the Bf function above. It requires the obtained mean and SE for the current sample and works out what the BF would be for a range of predicted means (which are set to be sdtheoryrange (with meanoftheory=0)).</p>
+<p>Bf_range function can be used with both old and new versions of Bf function. By default, uses old version (for backward compatibility) if using new version, specify method = “new”. The “new” function is an update of the Bf_range function in order to use the new Bf updated version. It works with normal, t and Cauchy H1s, and normal or t likelihoods.</p>
 <pre class="r"><code>Bf_range &lt;- function(sd, obtained, dfdata = 1, likelihood = c(&quot;normal&quot;, &quot;t&quot;), 
          modeloftheory= c(&quot;normal&quot;,&quot;t&quot;,&quot;cauchy&quot;) , meanoftheory = 0,
          modeoftheory = 0, sdtheoryrange, dftheory = 1, tail = 1, method = &quot;old&quot;)
@@ -731,38 +732,6 @@ div.tocify {
     }
     
   }
-  output = output[-1,] 
-  colnames(output) = c(&quot;sdtheory&quot;, &quot;BF&quot;)
-  return(output) 
-}</code></pre>
-</div>
-<div id="bf_range_updated" class="section level2">
-<h2>Bf_range_updated</h2>
-<p>Author: Catriona Silvey</p>
-<p>This function is an update of the Bf_range function in order to use the new Bf updated version. It works with normal, t and Cauchy H1s, and normal or t likelihoods.</p>
-<pre class="r"><code>Bf_range_updated &lt;- function(sd, obtained, dfdata = 1, likelihood = c(&quot;normal&quot;, &quot;t&quot;), 
-         modeloftheory= c(&quot;normal&quot;,&quot;t&quot;,&quot;cauchy&quot;) ,
-         modeoftheory = 0, sdtheoryrange, dftheory = 1, tail = 1)
-{
-  x = c(0)
-  y = c(0)
-  
-  for(sdi in sdtheoryrange)
-  {
-    #sdi = sdtheoryrange[1]
-    B = as.numeric(Bf(sd = sd, obtained = obtained, dfdata = dfdata, likelihood = likelihood, 
-                      modeloftheory = modeloftheory, modeoftheory=modeoftheory, scaleoftheory=sdi, 
-                      dftheory = dftheory, tail = tail))
-  
-    #following line corrects for the fact that the calcuator does not correctly compute BF when sdtheory==0; this code ensures that if sdtheory ==0, BF=1
-    
-    if (sdi ==0 ) {B=1}
-    
-    x= append(x,sdi)  
-    y= append(y,B)
-    output = cbind(x,y)
-    
-  } 
   output = output[-1,] 
   colnames(output) = c(&quot;sdtheory&quot;, &quot;BF&quot;)
   return(output) 
