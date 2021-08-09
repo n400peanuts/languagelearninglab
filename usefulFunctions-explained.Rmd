@@ -485,6 +485,7 @@ Bf_range_updated <- function(sd, obtained, dfdata = 1, likelihood = c("normal", 
 ```
 
 
+
 ## Bf_set
 
 Bf_set is a wrapper around Bf which allows us to caculate a set of BFs and put them in a table. It can only be used with non-uniform method and each h1 must be positive (as for original calculator).
