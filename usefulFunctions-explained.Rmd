@@ -1205,6 +1205,7 @@ summarySE <- function(data=NULL, measurevar, groupvars=NULL, na.rm=FALSE,
 ## summarySEwithin
 
 Author: [Cookbook for R](http://www.cookbook-r.com/Graphs/Plotting_means_and_error_bars_(ggplot2)/#Helper).
+dataset argument implemented by: Eva Viviani 
 
 From that website:
 
@@ -1224,9 +1225,12 @@ Summarizes data, handling within-subjects variables by removing inter-subject va
 
 - conf.interval: the percent range of the confidence interval (default is 95%)
 
+- dataset: if NULL (default), will produce a new dataset. If this is set to "old" it adds the confidence intervals and groupmean into the original dataframe, rather than into a new one
+
+
 ```{r}
 summarySEwithin <- function(data=NULL, measurevar, betweenvars=NULL, withinvars=NULL,
-                            idvar=NULL, na.rm=FALSE, conf.interval=.95, .drop=TRUE) {
+                            idvar=NULL, na.rm=FALSE, conf.interval=.95, .drop=TRUE, dataset = NULL) {
 
   # Ensure that the betweenvars and withinvars are factors
   factorvars <- vapply(data[, c(betweenvars, withinvars), drop=FALSE],
@@ -1270,28 +1274,20 @@ summarySEwithin <- function(data=NULL, measurevar, betweenvars=NULL, withinvars=
   ndatac$ci <- ndatac$ci * correctionFactor
 
   # Combine the un-normed means with the normed results
-  merge(datac, ndatac)
+  merge(datac, ndatac) -> data2
+  
+  if (!is.null(dataset)){ # if we want the info in the same dataset:
+    colnames(data2)[colnames(data2)==measurevar] <- "groupmean"
+    out = merge(data,data2)
+  return(out)
+
+  } else { # we want a new dataset
+    return(data2)
+  }
+  
 }
 ```
 
-
-## summarySEwithin2
-Author: Elizabeth Wonnacott
-
-this is a wrapper around summarySEwithin (above); it adds the confidence intervals and groupmean into the original dataframe, rather than into a new dataframe, which makes it possible to include these in a violin plot
-
-```{r}
-summarySEwithin2<- function(data=NULL, measurevar, betweenvars=NULL, withinvars=NULL,
-                            idvar=NULL, na.rm=FALSE, conf.interval=.95, .drop=TRUE){
-
-data2 = summarySEwithin(data=data, measurevar= measurevar, betweenvars=betweenvars, withinvars=withinvars,
-                            idvar=idvar,na.rm=na.rm, conf.interval=conf.interval, .drop=.drop)
-colnames(data2)[colnames(data2)==measurevar] <- "groupmean"
-out = merge(data,data2)
-return(out)
-} 
-
-```
 
 
 

@@ -1,5 +1,5 @@
 summarySEwithin <- function(data=NULL, measurevar, betweenvars=NULL, withinvars=NULL,
-                            idvar=NULL, na.rm=FALSE, conf.interval=.95, .drop=TRUE) {
+                            idvar=NULL, na.rm=FALSE, conf.interval=.95, .drop=TRUE, dataset = NULL) {
   
   # Ensure that the betweenvars and withinvars are factors
   factorvars <- vapply(data[, c(betweenvars, withinvars), drop=FALSE],
@@ -43,5 +43,15 @@ summarySEwithin <- function(data=NULL, measurevar, betweenvars=NULL, withinvars=
   ndatac$ci <- ndatac$ci * correctionFactor
   
   # Combine the un-normed means with the normed results
-  merge(datac, ndatac)
+  merge(datac, ndatac) -> data2
+  
+  if (!is.null(dataset)){ # if we want the info in the same dataset:
+    colnames(data2)[colnames(data2)==measurevar] <- "groupmean"
+    out = merge(data,data2)
+    return(out)
+    
+  } else { # we want a new dataset
+    return(data2)
+  }
+  
 }
