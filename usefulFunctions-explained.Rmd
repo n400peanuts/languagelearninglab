@@ -1144,8 +1144,8 @@ selectCenter= function(x, listfname)
 	return(x)
 }
 ```
-
-
+ 
+ 
 ## summarySE
 
 Author: [Cookbook for R](http://www.cookbook-r.com/Manipulating_data/Summarizing_data/).
