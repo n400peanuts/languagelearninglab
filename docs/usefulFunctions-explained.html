@@ -1280,6 +1280,26 @@ listFunctions &lt;- NULL #this needs to be a list, e.g., listFunctions &lt;- c(&
     return(df)
 }</code></pre>
 </div>
+<div id="selectcenter" class="section level2">
+<h2>selectCenter</h2>
+<p>Author: Elizabeth Wonnacott</p>
+<p>This function provides a wrapper around myCenter allowing you to center a specific list of variables from a data frame.</p>
+<ul>
+<li>x: data frame</li>
+<li>listfname: a list of the variables to be centered (e.g. list(variable1,variable2))</li>
+</ul>
+<p>The output is a copy of the data frame with a column (always a numeric variable) added for each of the centered variables. These columns are labelled with the column’s previous name, but with “.ct” appended (e.g., “variable1” will become “variable1.ct”).</p>
+<pre class="r"><code>selectCenter= function(x, listfname) 
+{
+    for (i in 1:length(listfname)) 
+    {
+        fname = as.character(listfname[i])
+        x[paste(fname,&quot;.ct&quot;, sep=&quot;&quot;)] = myCenter(x[fname])
+    }
+        
+    return(x)
+}</code></pre>
+</div>
 <div id="summaryse" class="section level2">
 <h2>summarySE</h2>
 <p>Author: <a href="http://www.cookbook-r.com/Manipulating_data/Summarizing_data/">Cookbook for R</a>.</p>

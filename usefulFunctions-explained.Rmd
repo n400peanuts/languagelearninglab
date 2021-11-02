@@ -1120,6 +1120,30 @@ round_df <- function(df, digits) {
 }
 ```
 
+## selectCenter
+
+Author: Elizabeth Wonnacott
+
+This function provides a wrapper around myCenter allowing you to center a specific list of variables from a data frame. 
+ 
+   * x: data frame
+   * listfname: a list of the variables to be centered (e.g. list(variable1,variable2))
+
+The output is a copy of the data frame with a column (always a numeric variable) added for each of the centered variables. These columns are labelled with the column's previous name, but with ".ct" appended (e.g., "variable1" will become "variable1.ct").
+
+```{r}
+
+selectCenter= function(x, listfname) 
+{
+	for (i in 1:length(listfname)) 
+	{
+		fname = as.character(listfname[i])
+		x[paste(fname,".ct", sep="")] = myCenter(x[fname])
+	}
+		
+	return(x)
+}
+```
 
 
 ## summarySE
