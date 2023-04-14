@@ -13,8 +13,8 @@
 
 <title>Functions frequently used</title>
 
-<script src="site_libs/header-attrs-2.10/header-attrs.js"></script>
-<script src="site_libs/jquery-1.11.3/jquery.min.js"></script>
+<script src="site_libs/header-attrs-2.18/header-attrs.js"></script>
+<script src="site_libs/jquery-3.6.0/jquery-3.6.0.min.js"></script>
 <meta name="viewport" content="width=device-width, initial-scale=1" />
 <link href="site_libs/bootstrap-3.3.5/css/cosmo.min.css" rel="stylesheet" />
 <script src="site_libs/bootstrap-3.3.5/js/bootstrap.min.js"></script>
@@ -63,6 +63,7 @@ if (window.hljs) {
 
 
 
+
 <style type = "text/css">
 .main-container {
   max-width: 940px;
@@ -83,6 +84,9 @@ button.code-folding-btn:focus {
 }
 summary {
   display: list-item;
+}
+details > summary > p:only-child {
+  display: inline;
 }
 pre code {
   padding: 0;
@@ -140,11 +144,15 @@ $(document).ready(function () {
     href = "index.html";
   var menuAnchor = $('a[href="' + href + '"]');
 
-  // mark it active
-  menuAnchor.tab('show');
-
-  // if it's got a parent navbar menu mark it active as well
-  menuAnchor.closest('li.dropdown').addClass('active');
+  // mark the anchor link active (and if it's in a dropdown, also mark that active)
+  var dropdown = menuAnchor.closest('li.dropdown');
+  if (window.bootstrap) { // Bootstrap 4+
+    menuAnchor.addClass('active');
+    dropdown.find('> .dropdown-toggle').addClass('active');
+  } else { // Bootstrap 3
+    menuAnchor.parent().addClass('active');
+    dropdown.addClass('active');
+  }
 
   // Navbar adjustments
   var navHeight = $(".navbar").first().height() + 15;
@@ -173,8 +181,8 @@ $(document).ready(function () {
   border-radius: 4px;
 }
 
-.tabset-dropdown > .nav-tabs > li.active:before {
-  content: "";
+.tabset-dropdown > .nav-tabs > li.active:before, .tabset-dropdown > .nav-tabs.nav-tabs-open:before {
+  content: "\e259";
   font-family: 'Glyphicons Halflings';
   display: inline-block;
   padding: 10px;
@@ -182,16 +190,9 @@ $(document).ready(function () {
 }
 
 .tabset-dropdown > .nav-tabs.nav-tabs-open > li.active:before {
-  content: "&#xe258;";
-  border: none;
-}
-
-.tabset-dropdown > .nav-tabs.nav-tabs-open:before {
-  content: "";
+  content: "\e258";
   font-family: 'Glyphicons Halflings';
-  display: inline-block;
-  padding: 10px;
-  border-right: 1px solid #ddd;
+  border: none;
 }
 
 .tabset-dropdown > .nav-tabs > li.active {
@@ -308,7 +309,7 @@ div.tocify {
 <div class="navbar navbar-default  navbar-fixed-top" role="navigation">
   <div class="container">
     <div class="navbar-header">
-      <button type="button" class="navbar-toggle collapsed" data-toggle="collapse" data-target="#navbar">
+      <button type="button" class="navbar-toggle collapsed" data-toggle="collapse" data-bs-toggle="collapse" data-target="#navbar" data-bs-target="#navbar">
         <span class="icon-bar"></span>
         <span class="icon-bar"></span>
         <span class="icon-bar"></span>
@@ -340,10 +341,19 @@ div.tocify {
 </div>
 
 
-<p>This is an R Markdown document explaining all the functions used by the language and learning lab. The functions are stored into the <a href="https://github.com/n400peanuts/languagelearninglab/tree/master/tools">tools</a> folder.</p>
+<p>This is an R Markdown document explaining all the functions used by
+the language and learning lab. The functions are stored into the <a
+href="https://github.com/n400peanuts/languagelearninglab/tree/master/tools">tools</a>
+folder.</p>
 <div id="addbf_ranges" class="section level2">
 <h2>addBf_ranges</h2>
-<p>This function takes as its input a dataframe which is the output of the BF_set function. This will have a set of betas, standard errors and sd-theory. The function adds and additional column to this table which shows the range of values over which BF’s meet the criteria of (i) strong evdience for null (BF&lt; 1/10); substantial evidence for null (BF&lt; 1/3); ambiguous (3 &gt; BF &gt;1/3 ); substantial evidence H1 (BF &gt;= 10).</p>
+<p>This function takes as its input a dataframe which is the output of
+the BF_set function. This will have a set of betas, standard errors and
+sd-theory. The function adds and additional column to this table which
+shows the range of values over which BF’s meet the criteria of (i)
+strong evdience for null (BF&lt; 1/10); substantial evidence for null
+(BF&lt; 1/3); ambiguous (3 &gt; BF &gt;1/3 ); substantial evidence H1
+(BF &gt;= 10).</p>
 <pre class="r"><code>addBf_ranges &lt;-function(Bf_df, sdtheoryrange)
 {
  
@@ -400,7 +410,11 @@ div.tocify {
 <div id="addbf_ranges3" class="section level2">
 <h2>addBf_ranges3</h2>
 <p>Author: Elizabeth Wonnacott</p>
-<p>Similar to addBf_ranges2 except that it works out ranges by working down/up from the given sd_theory value in increments given by stepsizes up to maximum given by maxs. Stepsizes/maxs can either be a single value used across all the coefficients or can be a vector of values (one per row - size must match )</p>
+<p>Similar to addBf_ranges2 except that it works out ranges by working
+down/up from the given sd_theory value in increments given by stepsizes
+up to maximum given by maxs. Stepsizes/maxs can either be a single value
+used across all the coefficients or can be a vector of values (one per
+row - size must match )</p>
 <pre class="r"><code>addBf_ranges3 &lt;-function(Bf_df, stepsizes, maxs)
 {
   RRminV = vector()
@@ -491,12 +505,28 @@ div.tocify {
 </div>
 <div id="bayesfactor-updated" class="section level2">
 <h2>BayesFactor <em>updated</em></h2>
-<p>Author of the new version: <a href="http://www.lifesci.sussex.ac.uk/home/Zoltan_Dienes/inference/Bence%20Bayes%20factor%20calculator.html">Bence Palfi</a>.</p>
-<p>Author of the old version: <a href="http://www.academia.edu/427288/Review_of_Understanding_psychology_as_a_science_An_introduction_to_scientific_and_statistical_inference">Baguely and Kayne (2010)</a>.</p>
-<p>This function computes the Bayes Factor and it’s equivalent to the <a href="http://www.lifesci.sussex.ac.uk/home/Zoltan_Dienes/inference/Bayes.htm">Dienes (2008) calculator</a>.</p>
-<p>Integration of new and old versions is made available by Catriona Silvey on 16.04.2021</p>
-<p>The BF function has been updated recently. The novel function has options for a likelihood that is either normal- or t-distributed, and a model of H1 that is either uniform, or normal or t- (or Cauchy-) distributed, with the normal/t/cauchy models being 1- or 2-tailed. In addition, the 1-tailed models are compatible with any mode (unlike the Dienes, 2008, calculator that assumed that 1-tailed models had a mode of zero).</p>
-<p>The Bf function incorporates both old and new methods (Baguley &amp; Kaye, 2010, and Bence Palfi’s more recent version). By default, uses B&amp;K version (for backward compatibility) if using Palfi version, specify method = “new”.</p>
+<p>Author of the new version: <a
+href="http://www.lifesci.sussex.ac.uk/home/Zoltan_Dienes/inference/Bence%20Bayes%20factor%20calculator.html">Bence
+Palfi</a>.</p>
+<p>Author of the old version: <a
+href="http://www.academia.edu/427288/Review_of_Understanding_psychology_as_a_science_An_introduction_to_scientific_and_statistical_inference">Baguely
+and Kayne (2010)</a>.</p>
+<p>This function computes the Bayes Factor and it’s equivalent to the <a
+href="http://www.lifesci.sussex.ac.uk/home/Zoltan_Dienes/inference/Bayes.htm">Dienes
+(2008) calculator</a>.</p>
+<p>Integration of new and old versions is made available by Catriona
+Silvey on 16.04.2021</p>
+<p>The BF function has been updated recently. The novel function has
+options for a likelihood that is either normal- or t-distributed, and a
+model of H1 that is either uniform, or normal or t- (or Cauchy-)
+distributed, with the normal/t/cauchy models being 1- or 2-tailed. In
+addition, the 1-tailed models are compatible with any mode (unlike the
+Dienes, 2008, calculator that assumed that 1-tailed models had a mode of
+zero).</p>
+<p>The Bf function incorporates both old and new methods (Baguley &amp;
+Kaye, 2010, and Bence Palfi’s more recent version). By default, uses
+B&amp;K version (for backward compatibility) if using Palfi version,
+specify method = “new”.</p>
 <pre class="r"><code>Bf&lt;- function(sd, obtained, dfdata = 1, likelihood = c(&quot;normal&quot;, &quot;t&quot;), 
                modeloftheory = c(&quot;normal&quot;, &quot;t&quot;, &quot;cauchy&quot;, &quot;uniform&quot;), uniform, 
                lower=0, upper=1, meanoftheory=0, sdtheory=1, modeoftheory =0, scaleoftheory = 1, 
@@ -585,7 +615,8 @@ div.tocify {
 <div id="bfclassify" class="section level2">
 <h2>BfClassify</h2>
 <p>Author: Elizabeth Wonnacott</p>
-<p>Classifies a Bayes factors as substantial for h1/h0 or ambigious (is used by addBf_ranges3) is used by Bf_addranges function below</p>
+<p>Classifies a Bayes factors as substantial for h1/h0 or ambigious (is
+used by addBf_ranges3) is used by Bf_addranges function below</p>
 <pre class="r"><code>BfClassify&lt;-function(B)
 {
   if(B&lt;=(1/3)){ &quot;h0&quot;}
@@ -596,9 +627,20 @@ div.tocify {
 <div id="bf_model" class="section level2">
 <h2>Bf_model</h2>
 <p>Author: Elizabeth Wonnacott</p>
-<p>This function calls the Bf function described above. Summary should be the coefficients summary from an lmer/gmer model (obtained via #summary(model)$coefficients). If its a lmer model, it expects there to be a columns “df” and “p” (i.e.summary function has been called using lmerTest package which applieds Kenward-Roger approximation for denominator degrees of freedom and computes p values). For each coefficient, the model uses the estimate as the obtained mean and the Std.Error as the measure of standard error.</p>
-<p>The function allows for positive and negtive h1 values. If negative, since the BF function requires a positive value for sdtheory, both sdtheory and #obtained are multiplied by -1.</p>
-<p>It doesn’t round unless there is an argument “digits” which says how many dp to round to- in this case the round_df function below is called.</p>
+<p>This function calls the Bf function described above. Summary should
+be the coefficients summary from an lmer/gmer model (obtained via
+#summary(model)$coefficients). If its a lmer model, it expects there to
+be a columns “df” and “p” (i.e.summary function has been called using
+lmerTest package which applieds Kenward-Roger approximation for
+denominator degrees of freedom and computes p values). For each
+coefficient, the model uses the estimate as the obtained mean and the
+Std.Error as the measure of standard error.</p>
+<p>The function allows for positive and negtive h1 values. If negative,
+since the BF function requires a positive value for sdtheory, both
+sdtheory and #obtained are multiplied by -1.</p>
+<p>It doesn’t round unless there is an argument “digits” which says how
+many dp to round to- in this case the round_df function below is
+called.</p>
 <pre class="r"><code>Bf_model &lt;-function(coeff_summary, coeff_list, h1_list,h1_motivation, tail_list, digits = &quot;&quot;)
 {
   
@@ -658,7 +700,13 @@ div.tocify {
 <div id="bf_powercalc" class="section level2">
 <h2>Bf_powercalc</h2>
 <p>Author: Elizabeth Wonnacott.</p>
-<p>This works with the Bf function above. It requires the same values as that function (i.e. the obtained mean and SE for the current sample, a value for the predicted mean, which is set to be sdtheory (with meanoftheory=0), and the current number of participants N). However rather than return BF for current sample, it works out what the BF would be for a range of different subject numbers (assuming that the SE scales with sqrt(N)).</p>
+<p>This works with the Bf function above. It requires the same values as
+that function (i.e. the obtained mean and SE for the current sample, a
+value for the predicted mean, which is set to be sdtheory (with
+meanoftheory=0), and the current number of participants N). However
+rather than return BF for current sample, it works out what the BF would
+be for a range of different subject numbers (assuming that the SE scales
+with sqrt(N)).</p>
 <pre class="r"><code>Bf_powercalc&lt;-function(sd, obtained, uniform, lower=0, upper=1, meanoftheory=0, sdtheory=1, tail=1, N, min, max)
 {
   
@@ -679,9 +727,18 @@ div.tocify {
 </div>
 <div id="bf_range" class="section level2">
 <h2>Bf_range</h2>
-<p>Author: Elizabeth Wonnacott Updated by: Catriona Silvey on 16.04.2021</p>
-<p>This works with the Bf function above. It requires the obtained mean and SE for the current sample and works out what the BF would be for a range of predicted means (which are set to be sdtheoryrange (with meanoftheory=0)).</p>
-<p>Bf_range function can be used with both old and new versions of Bf function. By default, uses old version (for backward compatibility) if using new version, specify method = “new”. The “new” function is an update of the Bf_range function in order to use the new Bf updated version. It works with normal, t and Cauchy H1s, and normal or t likelihoods.</p>
+<p>Author: Elizabeth Wonnacott Updated by: Catriona Silvey on
+16.04.2021</p>
+<p>This works with the Bf function above. It requires the obtained mean
+and SE for the current sample and works out what the BF would be for a
+range of predicted means (which are set to be sdtheoryrange (with
+meanoftheory=0)).</p>
+<p>Bf_range function can be used with both old and new versions of Bf
+function. By default, uses old version (for backward compatibility) if
+using new version, specify method = “new”. The “new” function is an
+update of the Bf_range function in order to use the new Bf updated
+version. It works with normal, t and Cauchy H1s, and normal or t
+likelihoods.</p>
 <pre class="r"><code>Bf_range &lt;- function(sd, obtained, dfdata = 1, likelihood = c(&quot;normal&quot;, &quot;t&quot;), 
          modeloftheory= c(&quot;normal&quot;,&quot;t&quot;,&quot;cauchy&quot;) , meanoftheory = 0,
          modeoftheory = 0, sdtheoryrange, dftheory = 1, tail = 1, method = &quot;old&quot;)
@@ -739,7 +796,9 @@ div.tocify {
 </div>
 <div id="bf_set" class="section level2">
 <h2>Bf_set</h2>
-<p>Bf_set is a wrapper around Bf which allows us to caculate a set of BFs and put them in a table. It can only be used with non-uniform method and each h1 must be positive (as for original calculator).</p>
+<p>Bf_set is a wrapper around Bf which allows us to caculate a set of
+BFs and put them in a table. It can only be used with non-uniform method
+and each h1 must be positive (as for original calculator).</p>
 <pre class="r"><code>Bf_set &lt;-function(names_list, meandiff_list, sd_list,  h1_list, tail_list)
 {
   Bfs = vector(&#39;double&#39;)
@@ -757,7 +816,10 @@ div.tocify {
 </div>
 <div id="confidence-interval-calculators-95-ci" class="section level2">
 <h2>confidence interval calculators (95% CI)</h2>
-<p>lower_ci.R and upper_ci.R are functions made available publicly in this <a href="https://community.rstudio.com/t/computing-confidence-intervals-with-dplyr/31868">Rcommunity post</a></p>
+<p>lower_ci.R and upper_ci.R are functions made available publicly in
+this <a
+href="https://community.rstudio.com/t/computing-confidence-intervals-with-dplyr/31868">Rcommunity
+post</a></p>
 <p>Example of how to use it::</p>
 <pre class="r"><code>library(tidyverse)
 test &lt;- data.frame(
@@ -798,7 +860,8 @@ upper_ci &lt;- function(mean, se, n, conf_level = 0.95){
 </div>
 <div id="deleterandomrows" class="section level2">
 <h2>deleteRandomRows</h2>
-<p>This takes a dataframe (df) and an integer (n) and returns a df which has n rows randomly deleted</p>
+<p>This takes a dataframe (df) and an integer (n) and returns a df which
+has n rows randomly deleted</p>
 <pre class="r"><code>deleteRandomRows = function(df,n){
   indices &lt;- sample(1:nrow(df), n)
   df &lt;- df[-indices,]
@@ -808,17 +871,29 @@ upper_ci &lt;- function(mean, se, n, conf_level = 0.95){
 <div id="download_from_gorilla" class="section level2">
 <h2>download_from_Gorilla</h2>
 <p>Author: Eva Viviani</p>
-<p>This function is a wrapper around <a href="https://github.com/University-of-Sheffield-EduTech/data-endpoint-gorilla.io/blob/master/Preview_Downloader_Script.R?fbclid=IwAR2zI3ZHgFKqZchCI1yEghEaGXgoDtJ_Fr3OWOGG-Iz_ki6jk30clYG3aR8">Ferenc Igali’s script.</a></p>
-<p>It downloads the data from Gorilla automatically, provided that you set your Gorilla login credentials into R.</p>
-<p><strong>TO SET YOUR GORILLA LOGIN CREDENTIALS:</strong> Install “keyring” package and run in R the following lines:</p>
+<p>This function is a wrapper around <a
+href="https://github.com/University-of-Sheffield-EduTech/data-endpoint-gorilla.io/blob/master/Preview_Downloader_Script.R?fbclid=IwAR2zI3ZHgFKqZchCI1yEghEaGXgoDtJ_Fr3OWOGG-Iz_ki6jk30clYG3aR8">Ferenc
+Igali’s script.</a></p>
+<p>It downloads the data from Gorilla automatically, provided that you
+set your Gorilla login credentials into R.</p>
+<p><strong>TO SET YOUR GORILLA LOGIN CREDENTIALS:</strong> Install
+“keyring” package and run in R the following lines:</p>
 <ul>
-<li>keyring::key_set(service = “Gorilla”, username = “<a href="mailto:eva.viviani@education.ox.ac.uk" class="email">eva.viviani@education.ox.ac.uk</a>”)</li>
+<li>keyring::key_set(service = “Gorilla”, username = “<a
+href="mailto:eva.viviani@education.ox.ac.uk"
+class="email">eva.viviani@education.ox.ac.uk</a>”)</li>
 </ul>
-<p>Change the “username” with the email you use for login into Gorilla. Keyring package will ask and save your password within R. These information are passed into the function below to log into Gorilla and access your data. <strong>Only if you have set your login credentials, you can run the “download_from_Gorilla” function below.</strong></p>
+<p>Change the “username” with the email you use for login into Gorilla.
+Keyring package will ask and save your password within R. These
+information are passed into the function below to log into Gorilla and
+access your data. <strong>Only if you have set your login credentials,
+you can run the “download_from_Gorilla” function below.</strong></p>
 <p>Arguments:</p>
 <ul>
-<li><p>output: a character string with the name of the folder where the downloaded file is saved</p></li>
-<li><p>ulr: a character string, or a vector of characters, with the links (starting with “https”) that I want to download</p></li>
+<li><p>output: a character string with the name of the folder where the
+downloaded file is saved</p></li>
+<li><p>ulr: a character string, or a vector of characters, with the
+links (starting with “https”) that I want to download</p></li>
 <li><p>myGorillaemail: the email that I use to log into Gorilla</p></li>
 </ul>
 <p>Example of how to use the function:</p>
@@ -873,14 +948,21 @@ download_from_Gorilla(output, url, &quot;eva.viviani@education.ox.ac.uk&quot;)</
 </div>
 <div id="filter2" class="section level2">
 <h2>filter2</h2>
-<p>This is a function which filters a column of data removing values which are some number of standard deviations above/below the mean for that participant, possibly in some condition/subcondition.</p>
+<p>This is a function which filters a column of data removing values
+which are some number of standard deviations above/below the mean for
+that participant, possibly in some condition/subcondition.</p>
 <ul>
 <li><p>im: the input matrix (a data frame)</p></li>
-<li><p>svn: a list of the names of factors to be group by (subject name + one or more conditions)</p></li>
-<li><p>fn: the name of the column containing the data to be filtered</p></li>
-<li><p>lim: how many standard deviations above/below the mean to filter</p></li>
+<li><p>svn: a list of the names of factors to be group by (subject name
++ one or more conditions)</p></li>
+<li><p>fn: the name of the column containing the data to be
+filtered</p></li>
+<li><p>lim: how many standard deviations above/below the mean to
+filter</p></li>
 </ul>
-<p>The function returns an input matrix identical to the input matrix but with an additional columns giving the group means and the “filtered” data.</p>
+<p>The function returns an input matrix identical to the input matrix
+but with an additional columns giving the group means and the “filtered”
+data.</p>
 <pre class="r"><code>filter2 = function(im, svn, fn, lim)
 {
   ## work out means lisfor each subject for each word
@@ -1008,7 +1090,9 @@ download_from_Gorilla(output, url, &quot;eva.viviani@education.ox.ac.uk&quot;)</
 </div>
 <div id="getmode" class="section level2">
 <h2>getmode</h2>
-<p>Author: <a href="https://www.tutorialspoint.com/r/r_mean_median_mode.htm">Tutorials point</a>.</p>
+<p>Author: <a
+href="https://www.tutorialspoint.com/r/r_mean_median_mode.htm">Tutorials
+point</a>.</p>
 <pre class="r"><code>getmode &lt;- function(v) {
    uniqv &lt;- unique(v)
    uniqv[which.max(tabulate(match(v, uniqv)))]
@@ -1016,17 +1100,22 @@ download_from_Gorilla(output, url, &quot;eva.viviani@education.ox.ac.uk&quot;)</
 </div>
 <div id="get_coeffs" class="section level2">
 <h2>get_coeffs</h2>
-<p>This function allows us to inspect particular coefficients from the output of an LME model by putting them in table.</p>
+<p>This function allows us to inspect particular coefficients from the
+output of an LME model by putting them in table.</p>
 <ul>
-<li><p>x: the output returned when running lmer or glmer (i.e. an object of type lmerMod or glmerMod)</p></li>
-<li><p>list: a list of the names of the coefficients to be extracted (e.g. c(“variable1”, “variable1:variable2”))</p></li>
+<li><p>x: the output returned when running lmer or glmer (i.e. an object
+of type lmerMod or glmerMod)</p></li>
+<li><p>list: a list of the names of the coefficients to be extracted
+(e.g. c(“variable1”, “variable1:variable2”))</p></li>
 </ul>
 <pre class="r"><code>get_coeffs &lt;- function(x,list){(as.data.frame(summary(x)$coefficients)[list,])}</code></pre>
 </div>
 <div id="get_coeffs2" class="section level2">
 <h2>get_coeffs2</h2>
 <p>outputs a set of specific coefficients for an lmer model</p>
-<p>x must match the form summary(lmermodel)$coefficients as applied to the output of an lmermodel. List should be a list of the coefficients which should be reported.</p>
+<p>x must match the form summary(lmermodel)$coefficients as applied to
+the output of an lmermodel. List should be a list of the coefficients
+which should be reported.</p>
 <pre class="r"><code>get_coeffs2 &lt;- function(x,list){(x[list,])}</code></pre>
 </div>
 <div id="inverse_log_odd" class="section level2">
@@ -1037,7 +1126,15 @@ download_from_Gorilla(output, url, &quot;eva.viviani@education.ox.ac.uk&quot;)</
 <div id="lizcenter" class="section level2">
 <h2>lizCenter</h2>
 <p>Author: Elizabeth Wonnacott.</p>
-<p>This function provides a wrapper around myCenter allowing to center a specific list of variables from a dataframe. The input is a dataframe (x) and a list of the names of the variables which you wish to center (listfname). The output is a copy of the dataframe with a column (numeric) added for each of the centered variables with each one labelled with it’s previous name with “.ct” appended. For example, if x is a dataframe with columns “a” and “b” lizCenter(x, list(“a”, “b”)) will return a dataframe with two additional columns, a.ct and b.ct, which are numeric, centered codings of the corresponding variables.</p>
+<p>This function provides a wrapper around myCenter allowing to center a
+specific list of variables from a dataframe. The input is a dataframe
+(x) and a list of the names of the variables which you wish to center
+(listfname). The output is a copy of the dataframe with a column
+(numeric) added for each of the centered variables with each one
+labelled with it’s previous name with “.ct” appended. For example, if x
+is a dataframe with columns “a” and “b” lizCenter(x, list(“a”, “b”))
+will return a dataframe with two additional columns, a.ct and b.ct,
+which are numeric, centered codings of the corresponding variables.</p>
 <pre class="r"><code>lizCenter= function(x, listfname) 
 {
     for (i in 1:length(listfname)) 
@@ -1051,13 +1148,21 @@ download_from_Gorilla(output, url, &quot;eva.viviani@education.ox.ac.uk&quot;)</
 </div>
 <div id="lizcenter2" class="section level2">
 <h2>lizCenter2</h2>
-<p>This function provides a wrapper around lizCenter which removes rows with missing data in the the DV before centering- note the df will have less rows as well as the centered variables (so will need to be careful with this is working with multiple dvs).</p>
+<p>This function provides a wrapper around lizCenter which removes rows
+with missing data in the the DV before centering- note the df will have
+less rows as well as the centered variables (so will need to be careful
+with this is working with multiple dvs).</p>
 <ul>
-<li><p>dv - a string which is the column name of the column in the dataframe with the dv</p></li>
+<li><p>dv - a string which is the column name of the column in the
+dataframe with the dv</p></li>
 <li><p>x: data frame</p></li>
-<li><p>listfname: a list of the variables to be centered (e.g. list(variable1,variable2))</p></li>
+<li><p>listfname: a list of the variables to be centered
+(e.g. list(variable1,variable2))</p></li>
 </ul>
-<p>The output is a copy of the data frame with a column (always a numeric variable) added for each of the centered variables. These columns are labeled with the column’s previous name, but with “.ct” appended (e.g., “variable1” will become “variable1.ct”).</p>
+<p>The output is a copy of the data frame with a column (always a
+numeric variable) added for each of the centered variables. These
+columns are labeled with the column’s previous name, but with “.ct”
+appended (e.g., “variable1” will become “variable1.ct”).</p>
 <pre class="r"><code>lizCenter2= function(x, listfname, dv) 
 {
       x= droplevels(subset(x, is.na(x[as.character(dv)])==FALSE))
@@ -1070,8 +1175,19 @@ download_from_Gorilla(output, url, &quot;eva.viviani@education.ox.ac.uk&quot;)</
 <div id="lizcontrasts" class="section level2">
 <h2>lizContrasts</h2>
 <p>Author: Elizabeth Wonnacott.</p>
-<p>This function implements a <a href="https://stats.idre.ucla.edu/r/library/r-library-contrast-coding-systems-for-categorical-variables/#SIMPLE">simple coding scheme</a>. It creates two centered dummy variables which stand in place of a three way factor (condition). This allows us to inspect each contrast separately against a reference level, as well as their interactions with other factors. Other fixed effects in the model can be evaluated as the average effects across all levels of the factor. Note that the intercept corresponds to the mean of cell means, sometimes referred as grand mean.</p>
-<p>The function takes a data frame (d), a factor from that database (condition), which must have three levels, and the name of the level of the factor which is to be used as the baseline for the contrasts (baselevel).</p>
+<p>This function implements a <a
+href="https://stats.idre.ucla.edu/r/library/r-library-contrast-coding-systems-for-categorical-variables/#SIMPLE">simple
+coding scheme</a>. It creates two centered dummy variables which stand
+in place of a three way factor (condition). This allows us to inspect
+each contrast separately against a reference level, as well as their
+interactions with other factors. Other fixed effects in the model can be
+evaluated as the average effects across all levels of the factor. Note
+that the intercept corresponds to the mean of cell means, sometimes
+referred as grand mean.</p>
+<p>The function takes a data frame (d), a factor from that database
+(condition), which must have three levels, and the name of the level of
+the factor which is to be used as the baseline for the contrasts
+(baselevel).</p>
 <pre class="r"><code>lizContrasts= function(d, condition, baselevel) 
 {
  
@@ -1102,7 +1218,19 @@ download_from_Gorilla(output, url, &quot;eva.viviani@education.ox.ac.uk&quot;)</
 <div id="lizcontrasts4" class="section level2">
 <h2>lizContrasts4</h2>
 <p>Author: Elizabeth Wonnacott.</p>
-<p>This function is a version of the previous <a href="https://n400peanuts.github.io/languagelearninglab/usefulFunctions-explained.html#lizContrasts">lizContrasts</a> function but to be used to create three centered dummy variables which stand in place of a four-way factor (condition). Notes that this function implements a <a href="https://stats.idre.ucla.edu/r/library/r-library-contrast-coding-systems-for-categorical-variables/#SIMPLE">simple coding scheme</a>. It creates three centered dummy variables which stand in place of a three way factor (condition). This allows us to inspect each contrast separately against a reference level, as well as their interactions with other factors. Other fixed effects in the model can be evaluated as the average effects across all levels of the factor. Note that the intercept corresponds to the mean of cell means, sometimes referred as grand mean.</p>
+<p>This function is a version of the previous <a
+href="https://n400peanuts.github.io/languagelearninglab/usefulFunctions-explained.html#lizContrasts">lizContrasts</a>
+function but to be used to create three centered dummy variables which
+stand in place of a four-way factor (condition). Notes that this
+function implements a <a
+href="https://stats.idre.ucla.edu/r/library/r-library-contrast-coding-systems-for-categorical-variables/#SIMPLE">simple
+coding scheme</a>. It creates three centered dummy variables which stand
+in place of a three way factor (condition). This allows us to inspect
+each contrast separately against a reference level, as well as their
+interactions with other factors. Other fixed effects in the model can be
+evaluated as the average effects across all levels of the factor. Note
+that the intercept corresponds to the mean of cell means, sometimes
+referred as grand mean.</p>
 <pre class="r"><code>lizContrasts4= function(d, condition, baselevel) 
 {
   #condition = pictest$condition
@@ -1141,11 +1269,17 @@ download_from_Gorilla(output, url, &quot;eva.viviani@education.ox.ac.uk&quot;)</
 <div id="loadfunctionsgithub" class="section level2">
 <h2>loadFunctionsGithub</h2>
 <p>Author: Eva Viviani.</p>
-<p>This function loads automatically all the functions stored in the <em>/tools</em> folder. It requires three arguments:</p>
+<p>This function loads automatically all the functions stored in the
+<em>/tools</em> folder. It requires three arguments:</p>
 <ul>
-<li><p>urlFolder that is the url of the github at the master tree level</p></li>
+<li><p>urlFolder that is the url of the github at the master tree
+level</p></li>
 <li><p>urlRaw, that is the raw address of the folder</p></li>
-<li><p>listFunctions that is a vector containing the functions I want to download. If I want all of them, simply leave it empty, i.e., listFunctions &lt;- NULL, otherwise specify the functions with the “.R” extention like this: e.g., listFunctions &lt;- c(“Bf.R”,“lizContrasts.R”,“getmode.R”)</p></li>
+<li><p>listFunctions that is a vector containing the functions I want to
+download. If I want all of them, simply leave it empty, i.e.,
+listFunctions &lt;- NULL, otherwise specify the functions with the “.R”
+extention like this: e.g., listFunctions &lt;-
+c(“Bf.R”,“lizContrasts.R”,“getmode.R”)</p></li>
 </ul>
 <pre class="r"><code>urlFolder &lt;- &#39;https://api.github.com/repos/n400peanuts/languagelearninglab/git/trees/master?recursive=1&#39;
 urlRaw &lt;- &#39;https://raw.githubusercontent.com/n400peanuts/languagelearninglab/master/tools/&#39;
@@ -1186,13 +1320,26 @@ listFunctions &lt;- NULL #this needs to be a list, e.g., listFunctions &lt;- c(&
 </div>
 <div id="mycenter" class="section level2">
 <h2>myCenter</h2>
-<p>Author: <a href="https://hlplab.wordpress.com/2009/04/27/centering-several-variables/">Florian Jaegers</a>.</p>
-<p>This function outputs the centered values of a variable, which can be a numeric variable, a factor, or a data frame.</p>
+<p>Author: <a
+href="https://hlplab.wordpress.com/2009/04/27/centering-several-variables/">Florian
+Jaegers</a>.</p>
+<p>This function outputs the centered values of a variable, which can be
+a numeric variable, a factor, or a data frame.</p>
 <p>From Florian’s blog:</p>
 <ul>
-<li><p>If the input is a numeric variable, the output is the centered variable.</p></li>
-<li><p>If the input is a factor, the output is a numeric variable with centered factor level values. That is, the factor’s levels are converted into numerical values in their inherent order (if not specified otherwise, R defaults to alphanumerical order). More specifically, this centers any binary factor so that the value below 0 will be the 1st level of the original factor, and the value above 0 will be the 2nd level.</p></li>
-<li><p>If the input is a data frame or matrix, the output is a new matrix of the same dimension and with the centered values and column names that correspond to the colnames() of the input preceded by “c” (e.g. “Variable1” will be “cVariable1”).</p></li>
+<li><p>If the input is a numeric variable, the output is the centered
+variable.</p></li>
+<li><p>If the input is a factor, the output is a numeric variable with
+centered factor level values. That is, the factor’s levels are converted
+into numerical values in their inherent order (if not specified
+otherwise, R defaults to alphanumerical order). More specifically, this
+centers any binary factor so that the value below 0 will be the 1st
+level of the original factor, and the value above 0 will be the 2nd
+level.</p></li>
+<li><p>If the input is a data frame or matrix, the output is a new
+matrix of the same dimension and with the centered values and column
+names that correspond to the colnames() of the input preceded by “c”
+(e.g. “Variable1” will be “cVariable1”).</p></li>
 </ul>
 <pre class="r"><code>myCenter &lt;- function(x) {
   if (is.numeric(x)) { return(x - mean(x, na.rm=T)) }
@@ -1214,14 +1361,22 @@ listFunctions &lt;- NULL #this needs to be a list, e.g., listFunctions &lt;- c(&
 </div>
 <div id="normdatawithin" class="section level2">
 <h2>normDataWithin</h2>
-<p>Author: <a href="http://www.cookbook-r.com/Graphs/Plotting_means_and_error_bars_(ggplot2)/#Helper">Cookbook for R</a>.</p>
-<p>This function is used by the SummarySEWithin function above. From that website:</p>
-<p>Norms the data within specified groups in a data frame; it normalizes each subject (identified by idvar) so that they have the same mean, within each group specified by betweenvars.</p>
+<p>Author: <a
+href="http://www.cookbook-r.com/Graphs/Plotting_means_and_error_bars_(ggplot2)/#Helper">Cookbook
+for R</a>.</p>
+<p>This function is used by the SummarySEWithin function above. From
+that website:</p>
+<p>Norms the data within specified groups in a data frame; it normalizes
+each subject (identified by idvar) so that they have the same mean,
+within each group specified by betweenvars.</p>
 <ul>
 <li><p>data: a data frame</p></li>
-<li><p>idvar: the name of a column that identifies each subject (or matched subjects)</p></li>
-<li><p>measurevar: the name of a column that contains the variable to be summarized</p></li>
-<li><p>betweenvars: a vector containing names of columns that are between-subjects variables</p></li>
+<li><p>idvar: the name of a column that identifies each subject (or
+matched subjects)</p></li>
+<li><p>measurevar: the name of a column that contains the variable to be
+summarized</p></li>
+<li><p>betweenvars: a vector containing names of columns that are
+between-subjects variables</p></li>
 <li><p>na.rm: a boolean that indicates whether to ignore NA’s</p></li>
 </ul>
 <pre class="r"><code>normDataWithin &lt;- function(data=NULL, idvar, measurevar, betweenvars=NULL,
@@ -1269,7 +1424,8 @@ listFunctions &lt;- NULL #this needs to be a list, e.g., listFunctions &lt;- c(&
 <div id="round_df" class="section level2">
 <h2>round_df</h2>
 <p>Author: Elizabeth Wonnacott</p>
-<p>Take a data frame “df” and round any numeric column by to the number of dp given in digits.</p>
+<p>Take a data frame “df” and round any numeric column by to the number
+of dp given in digits.</p>
 <pre class="r"><code>round_df &lt;- function(df, digits) {
     for(i in 1: ncol(df)){
      
@@ -1283,12 +1439,17 @@ listFunctions &lt;- NULL #this needs to be a list, e.g., listFunctions &lt;- c(&
 <div id="selectcenter" class="section level2">
 <h2>selectCenter</h2>
 <p>Author: Elizabeth Wonnacott</p>
-<p>This function provides a wrapper around myCenter allowing you to center a specific list of variables from a data frame.</p>
+<p>This function provides a wrapper around myCenter allowing you to
+center a specific list of variables from a data frame.</p>
 <ul>
 <li>x: data frame</li>
-<li>listfname: a list of the variables to be centered (e.g. list(variable1,variable2))</li>
+<li>listfname: a list of the variables to be centered
+(e.g. list(variable1,variable2))</li>
 </ul>
-<p>The output is a copy of the data frame with a column (always a numeric variable) added for each of the centered variables. These columns are labelled with the column’s previous name, but with “.ct” appended (e.g., “variable1” will become “variable1.ct”).</p>
+<p>The output is a copy of the data frame with a column (always a
+numeric variable) added for each of the centered variables. These
+columns are labelled with the column’s previous name, but with “.ct”
+appended (e.g., “variable1” will become “variable1.ct”).</p>
 <pre class="r"><code>selectCenter= function(x, listfname) 
 {
     for (i in 1:length(listfname)) 
@@ -1302,14 +1463,20 @@ listFunctions &lt;- NULL #this needs to be a list, e.g., listFunctions &lt;- c(&
 </div>
 <div id="summaryse" class="section level2">
 <h2>summarySE</h2>
-<p>Author: <a href="http://www.cookbook-r.com/Manipulating_data/Summarizing_data/">Cookbook for R</a>.</p>
-<p>It summarizes data, giving count, mean, standard deviation, standard error of the mean, and confidence interval (default 95%).</p>
+<p>Author: <a
+href="http://www.cookbook-r.com/Manipulating_data/Summarizing_data/">Cookbook
+for R</a>.</p>
+<p>It summarizes data, giving count, mean, standard deviation, standard
+error of the mean, and confidence interval (default 95%).</p>
 <ul>
 <li><p>data: a data frame</p></li>
-<li><p>measurevar: the name of a column that contains the variable to be summarized</p></li>
-<li><p>groupvars: a vector containing the names of the columns that contain grouping variables</p></li>
+<li><p>measurevar: the name of a column that contains the variable to be
+summarized</p></li>
+<li><p>groupvars: a vector containing the names of the columns that
+contain grouping variables</p></li>
 <li><p>na.rm: a boolean that indicates whether to ignore NA’s</p></li>
-<li><p>conf.interval: the percent range of the confidence interval (default is 95%)</p></li>
+<li><p>conf.interval: the percent range of the confidence interval
+(default is 95%)</p></li>
 </ul>
 <pre class="r"><code>summarySE &lt;- function(data=NULL, measurevar, groupvars=NULL, na.rm=FALSE,
                       conf.interval=.95, .drop=TRUE) {
@@ -1349,79 +1516,91 @@ listFunctions &lt;- NULL #this needs to be a list, e.g., listFunctions &lt;- c(&
 </div>
 <div id="summarysewithin" class="section level2">
 <h2>summarySEwithin</h2>
-<p>Author: <a href="http://www.cookbook-r.com/Graphs/Plotting_means_and_error_bars_(ggplot2)/#Helper">Cookbook for R</a>.</p>
+<p>Author: <a
+href="http://www.cookbook-r.com/Graphs/Plotting_means_and_error_bars_(ggplot2)/#Helper">Cookbook
+for R</a>. dataset argument implemented by: Eva Viviani and improved by
+Elizabeth Wonnacott</p>
 <p>From that website:</p>
-<p>Summarizes data, handling within-subjects variables by removing inter-subject variability. It will still work if there are no within-subjects variables. Gives count, un-normed mean, normed mean (with same between-group mean), standard deviation, standard error of the mean, and confidence interval. If there are within-subject variables, calculate adjusted values using method from Morey (2008).</p>
+<p>Summarizes data, handling within-subjects variables by removing
+inter-subject variability. It will still work if there are no
+within-subjects variables. Gives count, un-normed mean, normed mean
+(with same between-group mean), standard deviation, standard error of
+the mean, and confidence interval. If there are within-subject
+variables, calculate adjusted values using method from Morey (2008).</p>
 <ul>
 <li><p>data: a data frame</p></li>
-<li><p>measurevar: the name of a column that contains the variable to be summarized</p></li>
-<li><p>betweenvars: a vector containing names of columns that are between-subjects variables</p></li>
-<li><p>withinvars: a vector containing names of columns that are within-subjects variables</p></li>
-<li><p>idvar: the name of a column that identifies each subject (or matched subjects)</p></li>
+<li><p>measurevar: the name of a column that contains the variable to be
+summarized</p></li>
+<li><p>betweenvars: a vector containing names of columns that are
+between-subjects variables</p></li>
+<li><p>withinvars: a vector containing names of columns that are
+within-subjects variables</p></li>
+<li><p>idvar: the name of a column that identifies each subject (or
+matched subjects)</p></li>
 <li><p>na.rm: a boolean that indicates whether to ignore NA’s</p></li>
-<li><p>conf.interval: the percent range of the confidence interval (default is 95%)</p></li>
+<li><p>conf.interval: the percent range of the confidence interval
+(default is 95%)</p></li>
+<li><p>dataset: if NULL (default), will produce a new dataset. If this
+is set to “old” it adds the confidence intervals and groupmean into the
+original dataframe, rather than into a new one</p></li>
 </ul>
 <pre class="r"><code>summarySEwithin &lt;- function(data=NULL, measurevar, betweenvars=NULL, withinvars=NULL,
-                            idvar=NULL, na.rm=FALSE, conf.interval=.95, .drop=TRUE) {
-
+                            idvar=NULL, na.rm=FALSE, conf.interval=.95, .drop=TRUE, dataset = NULL) {
+  
   # Ensure that the betweenvars and withinvars are factors
   factorvars &lt;- vapply(data[, c(betweenvars, withinvars), drop=FALSE],
-    FUN=is.factor, FUN.VALUE=logical(1))
-
+                       FUN=is.factor, FUN.VALUE=logical(1))
+  
   if (!all(factorvars)) {
     nonfactorvars &lt;- names(factorvars)[!factorvars]
     message(&quot;Automatically converting the following non-factors to factors: &quot;,
             paste(nonfactorvars, collapse = &quot;, &quot;))
     data[nonfactorvars] &lt;- lapply(data[nonfactorvars], factor)
   }
-
+  
   # Get the means from the un-normed data
   datac &lt;- summarySE(data, measurevar, groupvars=c(betweenvars, withinvars),
                      na.rm=na.rm, conf.interval=conf.interval, .drop=.drop)
-
+  
   # Drop all the unused columns (these will be calculated with normed data)
   datac$sd &lt;- NULL
   datac$se &lt;- NULL
   datac$ci &lt;- NULL
-
+  
   # Norm each subject&#39;s data
   ndata &lt;- normDataWithin(data, idvar, measurevar, betweenvars, na.rm, .drop=.drop)
-
+  
   # This is the name of the new column
   measurevar_n &lt;- paste(measurevar, &quot;_norm&quot;, sep=&quot;&quot;)
-
+  
   # Collapse the normed data - now we can treat between and within vars the same
   ndatac &lt;- summarySE(ndata, measurevar_n, groupvars=c(betweenvars, withinvars),
                       na.rm=na.rm, conf.interval=conf.interval, .drop=.drop)
-
+  
   # Apply correction from Morey (2008) to the standard error and confidence interval
   #  Get the product of the number of conditions of within-S variables
   nWithinGroups    &lt;- prod(vapply(ndatac[,withinvars, drop=FALSE], FUN=nlevels,
-                           FUN.VALUE=numeric(1)))
+                                  FUN.VALUE=numeric(1)))
   correctionFactor &lt;- sqrt( nWithinGroups / (nWithinGroups-1) )
-
+  
   # Apply the correction factor
   ndatac$sd &lt;- ndatac$sd * correctionFactor
   ndatac$se &lt;- ndatac$se * correctionFactor
   ndatac$ci &lt;- ndatac$ci * correctionFactor
-
+  
   # Combine the un-normed means with the normed results
-  merge(datac, ndatac)
+  merge(datac, ndatac) -&gt; data2
+  
+  if (!is.null(dataset)){ # if we want the info in the same dataset:
+    colnames(data2)[colnames(data2)==measurevar] &lt;- &quot;groupmean&quot;
+    out = merge(data,data2)
+    return(out)
+    
+  } else { # we want a new dataset
+    return(data2)
+  }
+  
 }</code></pre>
-</div>
-<div id="summarysewithin2" class="section level2">
-<h2>summarySEwithin2</h2>
-<p>Author: Elizabeth Wonnacott</p>
-<p>this is a wrapper around summarySEwithin (above); it adds the confidence intervals and groupmean into the original dataframe, rather than into a new dataframe, which makes it possible to include these in a violin plot</p>
-<pre class="r"><code>summarySEwithin2&lt;- function(data=NULL, measurevar, betweenvars=NULL, withinvars=NULL,
-                            idvar=NULL, na.rm=FALSE, conf.interval=.95, .drop=TRUE){
-
-data2 = summarySEwithin(data=data, measurevar= measurevar, betweenvars=betweenvars, withinvars=withinvars,
-                            idvar=idvar,na.rm=na.rm, conf.interval=conf.interval, .drop=.drop)
-colnames(data2)[colnames(data2)==measurevar] &lt;- &quot;groupmean&quot;
-out = merge(data,data2)
-return(out)
-} </code></pre>
 </div>
 
 
