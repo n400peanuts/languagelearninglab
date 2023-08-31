@@ -16,53 +16,53 @@ This function takes as its input a dataframe which is the output of the BF_set f
 ```{r}
 addBf_ranges <-function(Bf_df, sdtheoryrange)
 {
- 
+  
   BFranges = vector()  
   for (b in 1:dim(Bf_df)[1]){
-      range = Bf_range(sd=as.numeric(as.character(Bf_df$SE[b])), obtained=as.numeric(as.character(Bf_df$'Mean difference'[b])), meanoftheory=0, sdtheoryrange=sdtheoryrange)
+    range = Bf_range(sd=as.numeric(as.character(Bf_df$SE[b])), obtained=as.numeric(as.character(Bf_df$'Mean difference'[b])), meanoftheory=0, sdtheoryrange=sdtheoryrange)
     
-      from_table = vector()
-      to_table = vector()
-      cat = vector()
-      category_table = vector()
-
-      for(i in 1:dim(range)[1]) {       # go through each value in the range and categorize it
-
-        #categorize current BF 
-        if (range[i,2] <= (1/3)) { 
-          cat[i] = "H0"      ## below or equal to 1/3
-        } else if (range[i,2] < 3) { ## NOT below or equal to 1/3, IS below 3 
-          cat[i] = "ambig"
-        } else {                ## NOT below or equal to 1/3, NOT below 3
-          cat[i] = "substH1"
-        }
-        
-        # adjust the table
-        j = length(category_table) 
-        
-        if (i==1){                      # first one
-          category_table[j+1] = cat[i]   
-          from_table[j+1] = range[i,1]
-          
-        } else if (cat[i] != cat[i-1]) { # NOT the first one, IS one where need to start new range 
-          to_table[j] = range[i-1,1]
-          category_table[j+1] = cat[i]
-          from_table[j+1] = range[i,1]
-        } 
-        
-        if (i==dim(range)[1]){        # if its the last one, finish off the table
-          to_table[j] = range[i,1]
-        }
+    from_table = vector()
+    to_table = vector()
+    cat = vector()
+    category_table = vector()
+    
+    for(i in 1:dim(range)[1]) {       # go through each value in the range and categorize it
+      
+      #categorize current BF 
+      if (range[i,2] <= (1/3)) { 
+        cat[i] = "H0"      ## below or equal to 1/3
+      } else if (range[i,2] < 3) { ## NOT below or equal to 1/3, IS below 3 
+        cat[i] = "ambig"
+      } else {                ## NOT below or equal to 1/3, NOT below 3
+        cat[i] = "substH1"
       }
-
-      # go through the little table and turn it int a string of ranges  
-      string = ""
-      for(i in 1: length(category_table)){
-          string = paste(string, category_table[i],":", round(from_table[i],3),"-", round(to_table[i],3))
-          }
-
-      BFranges[b] = string
+      
+      # adjust the table
+      j = length(category_table) 
+      
+      if (i==1){                      # first one
+        category_table[j+1] = cat[i]   
+        from_table[j+1] = range[i,1]
+        
+      } else if (cat[i] != cat[i-1]) { # NOT the first one, IS one where need to start new range 
+        to_table[j] = range[i-1,1]
+        category_table[j+1] = cat[i]
+        from_table[j+1] = range[i,1]
+      } 
+      
+      if (i==dim(range)[1]){        # if its the last one, finish off the table
+        to_table[j] = range[i,1]
+      }
     }
+    
+    # go through the little table and turn it int a string of ranges  
+    string = ""
+    for(i in 1: length(category_table)){
+      string = paste(string, category_table[i],":", round(from_table[i],3),"-", round(to_table[i],3))
+    }
+    
+    BFranges[b] = string
+  }
   out = cbind(Bf_df, BFranges)
   return(out)
 }
@@ -79,12 +79,12 @@ addBf_ranges3 <-function(Bf_df, stepsizes, maxs)
   RRminV = vector()
   RRmaxV = vector()
   for (b in 1:dim(Bf_df)[1]){
-
-      #b=8
-
+    
+    #b=8
+    
     if (length(stepsizes)==1){stepsize = stepsizes} else {stepsize = stepsizes[b]}
     if (length(maxs)==1){max = maxs} else {max = maxs[b]}
-
+    
     
     Ndp = num.decimals(stepsize)
     BF = as.numeric(as.character(Bf_df$Bf[b]))  
@@ -93,20 +93,20 @@ addBf_ranges3 <-function(Bf_df, stepsizes, maxs)
     sd = as.numeric(as.character(Bf_df$std.Error[b]))
     obtained = as.numeric(as.character(Bf_df$estimate[b]))
     tail = as.numeric(as.character(Bf_df$BFtail[b]))
-
+    
     # get the max RRmax 
     RRmax = ""
     lastsdtheory = sdtheory
     newsdtheory = ""
-      while(newsdtheory<= max){
-        newsdtheory = lastsdtheory + stepsize
-        newBF = Bf(sd=sd, obtained=obtained, uniform = NULL, meanoftheory=0,sdtheory=newsdtheory, tail=tail)$BayesFactor
-        
+    while(newsdtheory<= max){
+      newsdtheory = lastsdtheory + stepsize
+      newBF = Bf(sd=sd, obtained=obtained, uniform = NULL, meanoftheory=0,sdtheory=newsdtheory, tail=tail)$BayesFactor
+      
       if (BfClassify(newBF)!= BType) {
         RRmax = format(round(lastsdtheory, Ndp))
         break }
       lastsdtheory = newsdtheory
-      }
+    }
     
     if(RRmax == "" & BType == "h0") {RRmax = "inf"}  
     if(RRmax == "" & BType == "h1") {RRmax = paste(">", max, sep="")}  
@@ -119,7 +119,7 @@ addBf_ranges3 <-function(Bf_df, stepsizes, maxs)
     
     while(newsdtheory > 0){
       newBF = Bf(sd=sd, obtained=obtained, uniform = NULL, meanoftheory=0,sdtheory=newsdtheory, tail=tail)$BayesFactor
-        
+      
       if (BfClassify(newBF)!= BType) {
         RRmin = format(round(lastsdtheory, Ndp))
         break }
@@ -130,15 +130,15 @@ addBf_ranges3 <-function(Bf_df, stepsizes, maxs)
     if(RRmin== "" & BType == "ambig") {RRmin = 0}  
     if(RRmin== "" & BType == "h1") {RRmin = paste(" 0< & <", format(round(lastsdtheory,  Ndp), nsmall=Ndp), sep="")} 
     if(RRmin== "" & BType == "h0") {RRmin = paste(" 0< & <", format(round(lastsdtheory,  Ndp), nsmall=Ndp), sep="")}  
-
+    
     RRminV[b] = RRmin
     RRmaxV[b] = RRmax
     
   }
   out = cbind(Bf_df, RRminV, RRmaxV)
-
-    colnames(out)[10:11]= c("RRmin","RRmax")
-
+  
+  colnames(out)[10:11]= c("RRmin","RRmax")
+  
   return(out)
 }
 
@@ -186,9 +186,9 @@ The Bf function incorporates both old and new methods (Baguley & Kaye, 2010, and
 ```{r}
 
 Bf<- function(sd, obtained, dfdata = 1, likelihood = c("normal", "t"), 
-               modeloftheory = c("normal", "t", "cauchy", "uniform"), uniform, 
-               lower=0, upper=1, meanoftheory=0, sdtheory=1, modeoftheory =0, scaleoftheory = 1, 
-               dftheory = 1, tail=1, method = "old"){
+              modeloftheory = c("normal", "t", "cauchy", "uniform"), uniform, 
+              lower=0, upper=1, meanoftheory=0, sdtheory=1, modeoftheory =0, scaleoftheory = 1, 
+              dftheory = 1, tail=1, method = "old"){
   if (method == "old") {
     area <- 0
     if(identical(uniform, 1)){
@@ -227,49 +227,49 @@ Bf<- function(sd, obtained, dfdata = 1, likelihood = c("normal", "t"),
     if(likelihood=="normal"){
       dfdata=10^10
     }
-  if(modeloftheory=="normal"){
-    dftheory = 10^10
-  } else if(modeloftheory=="cauchy"){
-    dftheory = 1
-  }
-  area <- 0
-  normarea <- 0
-  if(modeloftheory=="uniform"){
-    theta <- lower
-    range <- upper - lower
-    incr <- range / 2000
-    for (A in -1000:1000){
-      theta <- theta + incr
-      dist_theta <- 1 / range
-      height <- dist_theta * dt((obtained-theta)/sd, df=dfdata)
-      area <- area + height * incr
+    if(modeloftheory=="normal"){
+      dftheory = 10^10
+    } else if(modeloftheory=="cauchy"){
+      dftheory = 1
     }
-    LikelihoodTheory <- area
-  }else{
-    theta <- modeoftheory - 10 * scaleoftheory
-    incr <- scaleoftheory/200
-    for (A in -2000:2000){
-      theta <- theta + incr
-      dist_theta <- dt((theta-modeoftheory)/scaleoftheory, df=dftheory)
-      if(identical(tail, 1)){
-        if (theta <= modeoftheory){
-          dist_theta <- 0
-        } else {
-          dist_theta <- dist_theta * 2
-        }
+    area <- 0
+    normarea <- 0
+    if(modeloftheory=="uniform"){
+      theta <- lower
+      range <- upper - lower
+      incr <- range / 2000
+      for (A in -1000:1000){
+        theta <- theta + incr
+        dist_theta <- 1 / range
+        height <- dist_theta * dt((obtained-theta)/sd, df=dfdata)
+        area <- area + height * incr
       }
-      height <- dist_theta * dt((obtained-theta)/sd, df = dfdata)
-      area <- area + height * incr
-      normarea <- normarea + dist_theta*incr
+      LikelihoodTheory <- area
+    }else{
+      theta <- modeoftheory - 10 * scaleoftheory
+      incr <- scaleoftheory/200
+      for (A in -2000:2000){
+        theta <- theta + incr
+        dist_theta <- dt((theta-modeoftheory)/scaleoftheory, df=dftheory)
+        if(identical(tail, 1)){
+          if (theta <= modeoftheory){
+            dist_theta <- 0
+          } else {
+            dist_theta <- dist_theta * 2
+          }
+        }
+        height <- dist_theta * dt((obtained-theta)/sd, df = dfdata)
+        area <- area + height * incr
+        normarea <- normarea + dist_theta*incr
+      }
+      LikelihoodTheory <- area/normarea
     }
-    LikelihoodTheory <- area/normarea
-  }
-  Likelihoodnull <- dt(obtained/sd, df = dfdata)
-  BayesFactor <- LikelihoodTheory/Likelihoodnull
-  BayesFactor
+    Likelihoodnull <- dt(obtained/sd, df = dfdata)
+    BayesFactor <- LikelihoodTheory/Likelihoodnull
+    BayesFactor
   }
 }
- 
+
 ```
 
 
@@ -297,60 +297,134 @@ The function allows for positive and negtive h1 values. If negative, since the B
 It doesn't round unless there is an argument "digits" which says how many dp to round to- in this case the round_df function below is called. 
 
 ```{r}
-Bf_model <-function(coeff_summary, coeff_list, h1_list,h1_motivation, tail_list, digits = "")
-{
-  
-  Bfs = vector('double')
-  estimates = vector('double')
-  sterrors = vector('double')
-  sdtheorys = vector('double')
-  pvalues = vector('double')
-  tzvalues = vector('double')
-  
-  
-  #  i=2
-  for (i in 1:length(coeff_list)){
+Bf_model = function(coeff_summary, coeff_list, h1_list, 
+                    h1_motivation, tail_list, digits = "", method = "old") {
+  if(method == "old") {
+    Bfs = vector('double')
+    estimates = vector('double')
+    sterrors = vector('double')
+    sdtheorys = vector('double')
+    pvalues = vector('double')
+    tzvalues = vector('double')
     
-    sd_error = coeff_summary[coeff_list[i], "Std. Error"]
-    obtained = coeff_summary[coeff_list[i], "Estimate"]
-    stdtheory = h1_list[i]
+    for (i in 1:length(coeff_list)) {
+      
+      sd_error = coeff_summary[coeff_list[i], "Std. Error"]
+      obtained = coeff_summary[coeff_list[i], "Estimate"]
+      stdtheory = h1_list[i]
+      
+      
+      if(h1_list[i] < 0) {
+        stdtheory = h1_list[i] * -1
+        obtained = (coeff_summary[coeff_list[i], "Estimate"] * -1)
+      }
+      
+      Bfs[i] = Bf(sd_error, obtained, uniform = 0, meanoftheory = 0, 
+                  sdtheory = stdtheory, tail = tail_list[i])$BayesFactor
+      estimates[i] = obtained
+      sdtheorys[i] = stdtheory
+      sterrors[i] = sd_error
+      
+      if(colnames(coeff_summary)[3] == "z value") {
+        tzlabel = "z"
+        tzvalues[i] = abs(coeff_summary[coeff_list[i], 3]) * sign(obtained)
+        pvalues[i] = coeff_summary[coeff_list[i], 4]  
+      } else if(colnames(coeff_summary)[3] == "df") {
+        tzlabel = "t"
+        tzvalues[i] = abs(coeff_summary[coeff_list[i], 4]) * sign(obtained)
+        pvalues[i] = coeff_summary[coeff_list[i], 5]  
+      } 
+    }
     
+    df = data.frame(cbind(coeff_list, estimates, sterrors, tzvalues, 
+                          pvalues, sdtheorys,  tail_list, Bfs,h1_motivation ))
+    colnames(df) = c("coefficient", "estimate", "std.Error", tzlabel, "p", 
+                     "sdtheory", "BFtail", "Bf", "h1 motivation")
+    df$estimate = as.numeric(as.character(df$estimate))
+    df$std.Error = as.numeric(as.character(df$std.Error))
+    df$sdtheory = as.numeric(as.character(df$sdtheory))
     
-    if(h1_list[i] <0) {
-      stdtheory = h1_list[i]*-1
-      obtained = (coeff_summary[coeff_list[i], "Estimate"]*-1)}
-    
-    
-    Bfs[i] = Bf(sd_error, obtained, uniform = 0, meanoftheory = 0, sdtheory=stdtheory , tail = tail_list[i])$BayesFactor
-    estimates[i] = obtained
-    sdtheorys[i] = stdtheory
-    sterrors[i] = sd_error
-    if(colnames(coeff_summary)[3]=="z value") {
-      tzlabel = "z"
-      tzvalues[i]= abs(coeff_summary[coeff_list[i], 3])*sign(obtained)
-      pvalues[i] = coeff_summary[coeff_list[i], 4]  
-    } 
-    else if(colnames(coeff_summary)[3]=="df") {
-      tzlabel = "t"
-      tzvalues[i]= abs(coeff_summary[coeff_list[i], 4])*sign(obtained)
-      pvalues[i] = coeff_summary[coeff_list[i], 5]  
-    } 
-    
-  }
+    df$Bf = as.numeric(as.character(df$Bf))
+    df$p = as.numeric(as.character(df$p))
+    if (tzlabel == "z") {df$z = as.numeric(as.character(df$z))}
+    if (tzlabel == "t") {df$t = as.numeric(as.character(df$t))}
+    if (digits !=  "") {df = round_df(df, digits)}
+    return(df)
+  } 
   
-  df = data.frame(cbind(coeff_list, estimates, sterrors, tzvalues, pvalues, sdtheorys,  tail_list, Bfs,h1_motivation )   )
-  colnames(df) = c("coefficient", "estimate", "std.Error", tzlabel,"p","sdtheory", "BFtail", "Bf","h1 motivation" )
-  df$estimate = as.numeric(as.character(df$estimate))
-  df$std.Error = as.numeric(as.character(df$std.Error))
-  df$sdtheory = as.numeric(as.character(df$sdtheory))
-  
-  df$Bf = as.numeric(as.character(df$Bf))
-  df$p = as.numeric(as.character(df$p))
-  if (tzlabel== "z") {df$z = as.numeric(as.character(df$z))}
-  if (tzlabel== "t") {df$t = as.numeric(as.character(df$t))}
-  if (digits !=  "") {df = round_df(df, digits)}
-  return(df)
-  
+  if(method == "new") {
+    Bfs = vector('double')
+    estimates = vector('double')
+    sterrors = vector('double')
+    sdtheorys = vector('double')
+    pvalues = vector('double')
+    tzvalues = vector('double')
+    dfvalues = vector('double')
+    
+    if(colnames(coeff_summary)[3] == "df"){tzlabel = "t"}
+    if(colnames(coeff_summary)[3] == "z value"){tzlabel = "z"}
+    
+    for (i in 1:length(coeff_list)) {
+      
+      sd = coeff_summary[coeff_list[i], "Std. Error"]
+      obtained = coeff_summary[coeff_list[i], "Estimate"]
+      stdtheory = h1_list[i]
+      
+      if(h1_list[i] < 0) {
+        stdtheory = h1_list[i] * -1
+        obtained = (coeff_summary[coeff_list[i], "Estimate"] * -1)}
+      
+      
+      if(tzlabel == "t") {
+        dfdata = coeff_summary[coeff_list[i], "df"]  
+        Bfs[i] = Bf(sd, obtained, dfdata, likelihood = c("t"), 
+                    modeloftheory = c("normal"), modeoftheory = 0, 
+                    scaleoftheory = stdtheory, tail = tail_list[i], 
+                    method = "new")
+      }
+      if(tzlabel == "z") {
+        Bfs[i] = Bf(sd, obtained, likelihood = c("normal"), 
+                    modeloftheory = c("normal"), modeoftheory = 0, 
+                    scaleoftheory = stdtheory, tail = tail_list[i], 
+                    method = "new")
+      }
+      
+      estimates[i] = obtained
+      sdtheorys[i] = stdtheory
+      sterrors[i] = sd
+      
+      if(tzlabel == "z") {
+        
+        tzvalues[i] = abs(coeff_summary[coeff_list[i], 3]) * sign(obtained)
+        pvalues[i] = coeff_summary[coeff_list[i], 4]  
+      } else if(tzlabel == "t") {
+        dfvalues[i] = dfdata
+        tzvalues[i] = abs(coeff_summary[coeff_list[i], 4]) * sign(obtained)
+        pvalues[i] = coeff_summary[coeff_list[i], 5]  
+      } 
+    }
+    
+    if(tzlabel == "z") {
+      df = data.frame(cbind(coeff_list, estimates, sterrors, tzvalues, pvalues, sdtheorys,  tail_list, Bfs, h1_motivation))
+      colnames(df) = c("coefficient", "estimate", "std.Error", tzlabel, "p", "sdtheory", "BFtail", "Bf", "h1 motivation")
+      
+    }
+    if(tzlabel == "t") {df = data.frame(cbind(coeff_list, estimates, sterrors, tzvalues, dfvalues, pvalues, sdtheorys,  tail_list, Bfs, h1_motivation))
+    colnames(df) = c("coefficient", "estimate", "std.Error", tzlabel, "df", "p", "sdtheory", "BFtail", "Bf", "h1 motivation")
+    
+    }
+    
+    df$estimate = as.numeric(as.character(df$estimate))
+    df$std.Error = as.numeric(as.character(df$std.Error))
+    df$sdtheory = as.numeric(as.character(df$sdtheory))
+    
+    df$Bf = as.numeric(as.character(df$Bf))
+    df$p = as.numeric(as.character(df$p))
+    if (tzlabel == "z") {df$z = as.numeric(as.character(df$z))}
+    if (tzlabel == "t") {df$t = as.numeric(as.character(df$t))}
+    if (digits !=  "") {df = round_df(df, digits)}
+    return(df)
+  } 
 }
 
 ```
@@ -394,8 +468,8 @@ Bf_range function can be used with both old and new versions of Bf function. By 
 
 ```{r}
 Bf_range <- function(sd, obtained, dfdata = 1, likelihood = c("normal", "t"), 
-         modeloftheory= c("normal","t","cauchy") , meanoftheory = 0,
-         modeoftheory = 0, sdtheoryrange, dftheory = 1, tail = 1, method = "old")
+                     modeloftheory= c("normal","t","cauchy") , meanoftheory = 0,
+                     modeoftheory = 0, sdtheoryrange, dftheory = 1, tail = 1, method = "old")
 {
   if (method == "old") {
     
@@ -415,8 +489,8 @@ Bf_range <- function(sd, obtained, dfdata = 1, likelihood = c("normal", "t"),
       x= append(x,sdi)  
       y= append(y,B)
       output = cbind(x,y)
-
-  }
+      
+    }
     
   }
   else if (method == "new") {
@@ -439,7 +513,7 @@ Bf_range <- function(sd, obtained, dfdata = 1, likelihood = c("normal", "t"),
       x= append(x,sdi)  
       y= append(y,B)
       output = cbind(x,y)
-
+      
     }
     
   }
@@ -459,9 +533,9 @@ Bf_set is a wrapper around Bf which allows us to caculate a set of BFs and put t
 Bf_set <-function(names_list, meandiff_list, sd_list,  h1_list, tail_list)
 {
   Bfs = vector('double')
-   for (i in 1:length(meandiff_list)){
+  for (i in 1:length(meandiff_list)){
     Bfs[i] = Bf(sd_list[i], meandiff_list[i], uniform = 0, meanoftheory = 0, sdtheory=h1_list[i] , tail = tail_list[i])$BayesFactor
-   
+    
   }
   
   df = data.frame(names_list, cbind(round(meandiff_list,3), round(sd_list,3),  h1_list, round(Bfs,3)))
@@ -482,13 +556,13 @@ Example of how to use it::
 
 library(tidyverse)
 test <- data.frame(
-           n = c(298, 298, 298, 298, 298, 298, 298, 298, 298, 298, 1, 1, 1, 1,
-                 1, 1, 1, 1, 1, 1, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3),
-         run = c(1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10,
-                 1, 2, 3, 4, 5, 6, 7, 8, 9, 10),
-         mAP = c(0.8112, 0.8006, 0.8076, 0.7999, 0.8067, 0.8046, 0.8004, 0.799,
-                 0.8052, 0.8002, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0.8333, 0.8333,
-                 0.8333, 1, 0.8333, 1, 1, 0.8333, 1, 1)
+  n = c(298, 298, 298, 298, 298, 298, 298, 298, 298, 298, 1, 1, 1, 1,
+        1, 1, 1, 1, 1, 1, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3),
+  run = c(1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10,
+          1, 2, 3, 4, 5, 6, 7, 8, 9, 10),
+  mAP = c(0.8112, 0.8006, 0.8076, 0.7999, 0.8067, 0.8046, 0.8004, 0.799,
+          0.8052, 0.8002, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0.8333, 0.8333,
+          0.8333, 1, 0.8333, 1, 1, 0.8333, 1, 1)
 )
 
 lower_ci <- function(mean, se, n, conf_level = 0.95){
@@ -500,13 +574,13 @@ upper_ci <- function(mean, se, n, conf_level = 0.95){
 }
 
 foobar <- test %>%
- group_by(n) %>%
+  group_by(n) %>%
   summarise(smean = mean(mAP, na.rm = TRUE),
             ssd = sd(mAP, na.rm = TRUE)) %>%
   mutate(se = ssd / sqrt(n),
          lower_ci = lower_ci(smean, se, n),
          upper_ci = upper_ci(smean, se, n))
-         
+
 foobar         
 
 ```
@@ -544,11 +618,11 @@ Author: Eva Viviani
 This function is a wrapper around [Ferenc Igali's script.](https://github.com/University-of-Sheffield-EduTech/data-endpoint-gorilla.io/blob/master/Preview_Downloader_Script.R?fbclid=IwAR2zI3ZHgFKqZchCI1yEghEaGXgoDtJ_Fr3OWOGG-Iz_ki6jk30clYG3aR8)
 
 It downloads the data from Gorilla automatically, provided that you set your Gorilla login credentials into R.
- 
+
 **TO SET YOUR GORILLA LOGIN CREDENTIALS:**
 Install "keyring" package and run in R the following lines:
-                      
- - keyring::key_set(service = "Gorilla",  username = "eva.viviani@education.ox.ac.uk") 
+
+- keyring::key_set(service = "Gorilla",  username = "eva.viviani@education.ox.ac.uk") 
 
 Change the "username" with the email you use for login into Gorilla. Keyring package will ask and save your password within R. These information are passed into the function below to log into Gorilla and access your data. **Only if you have set your login credentials, you can run the "download_from_Gorilla" function below.**
 
@@ -583,16 +657,16 @@ download_from_Gorilla <-function(output, url, myGorillaemail){
   
   #---------------------- get credentials and login ----------------------------#
   login <- list(
-      email = myGorillaemail, 
-     password = keyring::key_get("Gorilla", myGorillaemail))
+    email = myGorillaemail, 
+    password = keyring::key_get("Gorilla", myGorillaemail))
   login_res <- POST("https://gorilla.sc/api/login", body = login, encode = "form")
-   
-   #---------------------- cycle over the list of urls --------------------------#
+  
+  #---------------------- cycle over the list of urls --------------------------#
   for (i in 1:length(url)){
     file_end <- ""
     experiment_download_url <- GET(url[i])
     content_type_you_need_to_save <- experiment_download_url$headers$`content-type`
-  
+    
     #------------------------- check content type -------------------------------# 
     if (content_type_you_need_to_save == "text/csv") {
       file_end <- ".csv"
@@ -611,7 +685,7 @@ download_from_Gorilla <-function(output, url, myGorillaemail){
     downloader::download(file_download_url, paste0(output, file_name_saver), mode = "wb", quiet = T)
     print(paste0("file ",i))
   }
-   print("------ download done -------")
+  print("------ download done -------")
 }
 ```
 
@@ -687,22 +761,22 @@ Author: Catriona Silvey
 This function generates some multilevel binary data.
 
 Arguments: 
- 
- - n_subj = number of subjects
- 
- - n_obs = total number of trials per subject
- 
- - alpha = veridical grand mean log odds performance
- 
- - beta1 = veridical effect of cond1
- 
- - beta2 = veridical effect of cond2
- 
- - beta3 = veridical cond1 * cond2 interaction effect
- 
- - subj_corrs = list of correlations between random effects
- 
- - subj_tau = list of SDs of random effects
+
+- n_subj = number of subjects
+
+- n_obs = total number of trials per subject
+
+- alpha = veridical grand mean log odds performance
+
+- beta1 = veridical effect of cond1
+
+- beta2 = veridical effect of cond2
+
+- beta3 = veridical cond1 * cond2 interaction effect
+
+- subj_corrs = list of correlations between random effects
+
+- subj_tau = list of SDs of random effects
 
 ```{r}
 
@@ -773,8 +847,8 @@ Author: [Tutorials point](https://www.tutorialspoint.com/r/r_mean_median_mode.ht
 
 ```{r}
 getmode <- function(v) {
-   uniqv <- unique(v)
-   uniqv[which.max(tabulate(match(v, uniqv)))]
+  uniqv <- unique(v)
+  uniqv[which.max(tabulate(match(v, uniqv)))]
 }
 ```
 
@@ -825,24 +899,24 @@ The output is a copy of the dataframe with a column (numeric) added for each of 
 
 lizCenter= function(x, listfname) 
 {
-	for (i in 1:length(listfname)) 
-	{
-		fname = as.character(listfname[i])
-		x[paste(fname,".ct", sep="")] = myCenter(x[fname])
-	}
-		
-	return(x)
+  for (i in 1:length(listfname)) 
+  {
+    fname = as.character(listfname[i])
+    x[paste(fname,".ct", sep="")] = myCenter(x[fname])
+  }
+  
+  return(x)
 }
 ```	
 
 ## lizCenter2
 This function provides a wrapper around lizCenter which removes rows with missing data in the the DV before centering- note the df will have less rows as well as the centered variables (so will need to be careful with this is working with multiple dvs).
 
-   * dv - a string which is the column name of the column in the dataframe with the dv
+* dv - a string which is the column name of the column in the dataframe with the dv
 
-   * x: data frame
+* x: data frame
 
-   * listfname: a list of the variables to be centered (e.g. list(variable1,variable2))
+* listfname: a list of the variables to be centered (e.g. list(variable1,variable2))
 
 The output is a copy of the data frame with a column (always a numeric variable) added for each of the centered variables. These columns are labeled with the column's previous name, but with ".ct" appended (e.g., "variable1" will become "variable1.ct").
 
@@ -850,11 +924,11 @@ The output is a copy of the data frame with a column (always a numeric variable)
 
 lizCenter2= function(x, listfname, dv) 
 {
-	  x= droplevels(subset(x, is.na(x[as.character(dv)])==FALSE))
-    x = lizCenter(x, listfname)
-	 
-	
-	return(x)
+  x= droplevels(subset(x, is.na(x[as.character(dv)])==FALSE))
+  x = lizCenter(x, listfname)
+  
+  
+  return(x)
 }
 ```
 
@@ -869,29 +943,29 @@ The function takes a data frame (d), a factor from that database (condition), wh
 ```{r}
 lizContrasts= function(d, condition, baselevel) 
 {
- 
-    condition = factor(condition)
- condition = relevel(condition, baselevel)
-
-    a= (contrasts(condition)-apply(contrasts(condition),2,mean))
-    d$dummy1[condition== rownames(a)[1]] <- a[1] 
-    d$dummy1[condition== rownames(a)[2]] <- a[2] 
-    d$dummy1[condition== rownames(a)[3]] <- a[3] 
-    
-    d$dummy2[condition== rownames(a)[1]] <- a[4] 
-    d$dummy2[condition== rownames(a)[2]] <- a[5] 
-    d$dummy2[condition== rownames(a)[3]] <- a[6] 
-
-    name1 = paste(baselevel, rownames(a)[2],sep="_VERSUS_")
-    name2 = paste(baselevel, rownames(a)[3],sep="_VERSUS_")
-
-    d[name1] = d$dummy1 
-    d[name2] = d$dummy2 
-
-    d$dummy1 <-NULL 
-    d$dummy2 <-NULL 
-    
-    return(d)
+  
+  condition = factor(condition)
+  condition = relevel(condition, baselevel)
+  
+  a= (contrasts(condition)-apply(contrasts(condition),2,mean))
+  d$dummy1[condition== rownames(a)[1]] <- a[1] 
+  d$dummy1[condition== rownames(a)[2]] <- a[2] 
+  d$dummy1[condition== rownames(a)[3]] <- a[3] 
+  
+  d$dummy2[condition== rownames(a)[1]] <- a[4] 
+  d$dummy2[condition== rownames(a)[2]] <- a[5] 
+  d$dummy2[condition== rownames(a)[3]] <- a[6] 
+  
+  name1 = paste(baselevel, rownames(a)[2],sep="_VERSUS_")
+  name2 = paste(baselevel, rownames(a)[3],sep="_VERSUS_")
+  
+  d[name1] = d$dummy1 
+  d[name2] = d$dummy2 
+  
+  d$dummy1 <-NULL 
+  d$dummy2 <-NULL 
+  
+  return(d)
 }
 ```
 
@@ -1018,20 +1092,20 @@ From Florian's blog:
 
 myCenter <- function(x) {
   if (is.numeric(x)) { return(x - mean(x, na.rm=T)) }
-	if (is.factor(x)) {
-		x= as.numeric(x)
-		return(x - mean(x, na.rm=T))
-	}
-	if (is.data.frame(x) || is.matrix(x)) {
-		m= matrix(nrow=nrow(x), ncol=ncol(x))
-		colnames(m)= paste("c", colnames(x), sep="")
-	
-		for (i in 1:ncol(x)) {
-		
-			m[,i]= myCenter(x[,i])
-		}
-		return(as.data.frame(m))
-	}
+  if (is.factor(x)) {
+    x= as.numeric(x)
+    return(x - mean(x, na.rm=T))
+  }
+  if (is.data.frame(x) || is.matrix(x)) {
+    m= matrix(nrow=nrow(x), ncol=ncol(x))
+    colnames(m)= paste("c", colnames(x), sep="")
+    
+    for (i in 1:ncol(x)) {
+      
+      m[,i]= myCenter(x[,i])
+    }
+    return(as.data.frame(m))
+  }
 }
 ```
 
@@ -1057,29 +1131,29 @@ Norms the data within specified groups in a data frame; it normalizes each subje
 ```{r}
 normDataWithin <- function(data=NULL, idvar, measurevar, betweenvars=NULL,
                            na.rm=FALSE, .drop=TRUE) {
-    #library(plyr)
-
-    # Measure var on left, idvar + between vars on right of formula.
-    data.subjMean <- ddply(data, c(idvar, betweenvars), .drop=.drop,
-     .fun = function(xx, col, na.rm) {
-        c(subjMean = mean(xx[,col], na.rm=na.rm))
-      },
-      measurevar,
-      na.rm
-    )
-
-    # Put the subject means with original data
-    data <- merge(data, data.subjMean)
-
-    # Get the normalized data in a new column
-    measureNormedVar <- paste(measurevar, "_norm", sep="")
-    data[,measureNormedVar] <- data[,measurevar] - data[,"subjMean"] +
-                               mean(data[,measurevar], na.rm=na.rm)
-
-    # Remove this subject mean column
-    data$subjMean <- NULL
-
-    return(data)
+  #library(plyr)
+  
+  # Measure var on left, idvar + between vars on right of formula.
+  data.subjMean <- ddply(data, c(idvar, betweenvars), .drop=.drop,
+                         .fun = function(xx, col, na.rm) {
+                           c(subjMean = mean(xx[,col], na.rm=na.rm))
+                         },
+                         measurevar,
+                         na.rm
+  )
+  
+  # Put the subject means with original data
+  data <- merge(data, data.subjMean)
+  
+  # Get the normalized data in a new column
+  measureNormedVar <- paste(measurevar, "_norm", sep="")
+  data[,measureNormedVar] <- data[,measurevar] - data[,"subjMean"] +
+    mean(data[,measurevar], na.rm=na.rm)
+  
+  # Remove this subject mean column
+  data$subjMean <- NULL
+  
+  return(data)
 }
 ```
 
@@ -1088,10 +1162,10 @@ Author: Elizabeth Wonnacott
 
 ```{r}
 num.decimals <- function(x) {
-    stopifnot(class(x)=="numeric")
-    x <- sub("0+$","",x)
-    x <- sub("^.+[.]","",x)
-    nchar(x)
+  stopifnot(class(x)=="numeric")
+  x <- sub("0+$","",x)
+  x <- sub("^.+[.]","",x)
+  nchar(x)
 }
 ```
 
@@ -1110,13 +1184,13 @@ Author: Elizabeth Wonnacott
 Take a data frame "df" and round any numeric column by to the number of dp given in digits.
 ```{r}
 round_df <- function(df, digits) {
-    for(i in 1: ncol(df)){
-     
-      if (is.numeric(df[,i])) { 
-        df[,i]= round(df[,i],digits) }
-    }
+  for(i in 1: ncol(df)){
     
-    return(df)
+    if (is.numeric(df[,i])) { 
+      df[,i]= round(df[,i],digits) }
+  }
+  
+  return(df)
 }
 ```
 
@@ -1125,9 +1199,9 @@ round_df <- function(df, digits) {
 Author: Elizabeth Wonnacott
 
 This function provides a wrapper around myCenter allowing you to center a specific list of variables from a data frame. 
- 
-   * x: data frame
-   * listfname: a list of the variables to be centered (e.g. list(variable1,variable2))
+
+* x: data frame
+* listfname: a list of the variables to be centered (e.g. list(variable1,variable2))
 
 The output is a copy of the data frame with a column (always a numeric variable) added for each of the centered variables. These columns are labelled with the column's previous name, but with ".ct" appended (e.g., "variable1" will become "variable1.ct").
 
@@ -1135,19 +1209,19 @@ The output is a copy of the data frame with a column (always a numeric variable)
 
 selectCenter= function(x, listfname) 
 {
-	for (i in 1:length(listfname)) 
-	{
-		fname = as.character(listfname[i])
-		x[paste(fname,".ct", sep="")] = myCenter(x[fname])
-	}
-		
-	return(x)
+  for (i in 1:length(listfname)) 
+  {
+    fname = as.character(listfname[i])
+    x[paste(fname,".ct", sep="")] = myCenter(x[fname])
+  }
+  
+  return(x)
 }
 ```
- 
- 
- 
- 
+
+
+
+
 ## summarySE
 
 Author: [Cookbook for R](http://www.cookbook-r.com/Manipulating_data/Summarizing_data/).
@@ -1167,38 +1241,38 @@ It summarizes data, giving count, mean, standard deviation, standard error of th
 ```{r}
 summarySE <- function(data=NULL, measurevar, groupvars=NULL, na.rm=FALSE,
                       conf.interval=.95, .drop=TRUE) {
-    require(plyr)
-
-    # New version of length which can handle NA's: if na.rm==T, don't count them
-    length2 <- function (x, na.rm=FALSE) {
-        if (na.rm) sum(!is.na(x))
-        else       length(x)
-    }
-
-    # This does the summary. For each group's data frame, return a vector with
-    # N, mean, and sd
-    datac <- ddply(data, groupvars, .drop=.drop,
-      .fun = function(xx, col) {
-        c(N    = length2(xx[[col]], na.rm=na.rm),
-          mean = mean   (xx[[col]], na.rm=na.rm),
-          sd   = sd     (xx[[col]], na.rm=na.rm)
-        )
-      },
-      measurevar
-    )
-
-    # Rename the "mean" column    
-    datac <- rename(datac, c("mean" = measurevar))
-
-    datac$se <- datac$sd / sqrt(datac$N)  # Calculate standard error of the mean
-
-    # Confidence interval multiplier for standard error
-    # Calculate t-statistic for confidence interval: 
-    # e.g., if conf.interval is .95, use .975 (above/below), and use df=N-1
-    ciMult <- qt(conf.interval/2 + .5, datac$N-1)
-    datac$ci <- datac$se * ciMult
-
-    return(datac)
+  require(plyr)
+  
+  # New version of length which can handle NA's: if na.rm==T, don't count them
+  length2 <- function (x, na.rm=FALSE) {
+    if (na.rm) sum(!is.na(x))
+    else       length(x)
+  }
+  
+  # This does the summary. For each group's data frame, return a vector with
+  # N, mean, and sd
+  datac <- ddply(data, groupvars, .drop=.drop,
+                 .fun = function(xx, col) {
+                   c(N    = length2(xx[[col]], na.rm=na.rm),
+                     mean = mean   (xx[[col]], na.rm=na.rm),
+                     sd   = sd     (xx[[col]], na.rm=na.rm)
+                   )
+                 },
+                 measurevar
+  )
+  
+  # Rename the "mean" column    
+  datac <- rename(datac, c("mean" = measurevar))
+  
+  datac$se <- datac$sd / sqrt(datac$N)  # Calculate standard error of the mean
+  
+  # Confidence interval multiplier for standard error
+  # Calculate t-statistic for confidence interval: 
+  # e.g., if conf.interval is .95, use .975 (above/below), and use df=N-1
+  ciMult <- qt(conf.interval/2 + .5, datac$N-1)
+  datac$ci <- datac$se * ciMult
+  
+  return(datac)
 }
 ```
 
