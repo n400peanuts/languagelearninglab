@@ -417,17 +417,18 @@ used across all the coefficients or can be a vector of values (one per
 row - size must match )</p>
 <pre class="r"><code>addBf_ranges3 = function(Bf_df, stepsizes, maxs, method = &quot;old&quot;) {
   
-  if(method == &quot;old&quot;) {  
+  if(method==&quot;old&quot;){  
     RRminV = vector()
     RRmaxV = vector()
-    for (b in 1:dim(Bf_df)[1]) {
+    for (b in 1:dim(Bf_df)[1]){
       
-      if (length(stepsizes) == 1) {stepsize = stepsizes} else {stepsize = stepsizes[b]}
-      if (length(maxs) == 1) {max = maxs} else {max = maxs[b]}
+      if (length(stepsizes)==1){stepsize = stepsizes} else {stepsize = stepsizes[b]}
+      if (length(maxs)==1){max = maxs} else {max = maxs[b]}
+      
       
       Ndp = num.decimals(stepsize)
       BF = as.numeric(as.character(Bf_df$Bf[b]))  
-      BType = BfClassify(BF) 
+      BType= BfClassify(BF) 
       sdtheory = as.numeric(as.character(Bf_df$sdtheory[b]))  
       sd = as.numeric(as.character(Bf_df$std.Error[b]))
       obtained = as.numeric(as.character(Bf_df$estimate[b]))
@@ -437,39 +438,38 @@ row - size must match )</p>
       RRmax = &quot;&quot;
       lastsdtheory = sdtheory
       newsdtheory = &quot;&quot;
-      while(newsdtheory &lt;= max) {
+      while(newsdtheory&lt;= max){
         newsdtheory = lastsdtheory + stepsize
-        newBF = Bf(sd = sd, obtained = obtained, uniform = NULL, meanoftheory = 0, sdtheory = newsdtheory, tail = tail)$BayesFactor
+        newBF = Bf(sd=sd, obtained=obtained, uniform = NULL, meanoftheory=0,sdtheory=newsdtheory, tail=tail)$BayesFactor
         
-        if (BfClassify(newBF) != BType) {
+        if (BfClassify(newBF)!= BType) {
           RRmax = format(round(lastsdtheory, Ndp))
-          break 
-        }
+          break }
         lastsdtheory = newsdtheory
       }
       
       if(RRmax == &quot;&quot; &amp; BType == &quot;h0&quot;) {RRmax = &quot;inf&quot;}  
-      if(RRmax == &quot;&quot; &amp; BType == &quot;h1&quot;) {RRmax = paste(&quot;&gt;&quot;, max, sep = &quot;&quot;)}  
-      if(RRmax == &quot;&quot; &amp; BType == &quot;ambig&quot;) {RRmax = paste(&quot;&gt;&quot;, max, sep = &quot;&quot;)}  
+      if(RRmax == &quot;&quot; &amp; BType == &quot;h1&quot;) {RRmax = paste(&quot;&gt;&quot;, max, sep=&quot;&quot;)}  
+      if(RRmax == &quot;&quot; &amp; BType == &quot;ambig&quot;) {RRmax = paste(&quot;&gt;&quot;, max, sep=&quot;&quot;)}  
       
       # get the min RRmin 
       RRmin = &quot;&quot;
       lastsdtheory = sdtheory
       newsdtheory = lastsdtheory - stepsize
       
-      while(newsdtheory &gt; 0) {
-        newBF = Bf(sd = sd, obtained = obtained, uniform = NULL, meanoftheory = 0, sdtheory = newsdtheory, tail = tail)$BayesFactor
+      while(newsdtheory &gt; 0){
+        newBF = Bf(sd=sd, obtained=obtained, uniform = NULL, meanoftheory=0,sdtheory=newsdtheory, tail=tail)$BayesFactor
         
-        if (BfClassify(newBF) != BType) {
+        if (BfClassify(newBF)!= BType) {
           RRmin = format(round(lastsdtheory, Ndp))
           break }
         lastsdtheory = newsdtheory
         newsdtheory = lastsdtheory-stepsize
       }
       
-      if(RRmin == &quot;&quot; &amp; BType == &quot;ambig&quot;) {RRmin = 0}  
-      if(RRmin == &quot;&quot; &amp; BType == &quot;h1&quot;) {RRmin = paste(&quot; 0&lt; &amp; &lt;&quot;, format(round(lastsdtheory,  Ndp), nsmall = Ndp), sep = &quot;&quot;)} 
-      if(RRmin == &quot;&quot; &amp; BType == &quot;h0&quot;) {RRmin = paste(&quot; 0&lt; &amp; &lt;&quot;, format(round(lastsdtheory,  Ndp), nsmall = Ndp), sep = &quot;&quot;)}  
+      if(RRmin== &quot;&quot; &amp; BType == &quot;ambig&quot;) {RRmin = 0}  
+      if(RRmin== &quot;&quot; &amp; BType == &quot;h1&quot;) {RRmin = paste(&quot; 0&lt; &amp; &lt;&quot;, format(round(lastsdtheory,  Ndp), nsmall=Ndp), sep=&quot;&quot;)} 
+      if(RRmin== &quot;&quot; &amp; BType == &quot;h0&quot;) {RRmin = paste(&quot; 0&lt; &amp; &lt;&quot;, format(round(lastsdtheory,  Ndp), nsmall=Ndp), sep=&quot;&quot;)}  
       
       RRminV[b] = RRmin
       RRmaxV[b] = RRmax
@@ -477,23 +477,23 @@ row - size must match )</p>
     }
     out = cbind(Bf_df, RRminV, RRmaxV)
     
-    colnames(out)[10:11] = c(&quot;RRmin&quot;,&quot;RRmax&quot;)
+    colnames(out)[10:11]= c(&quot;RRmin&quot;,&quot;RRmax&quot;)
     
     return(out)
   }
-  if(method == &quot;new&quot;) {  
+  if(method==&quot;new&quot;){  
     RRminV = vector()
     RRmaxV = vector()
-    for (b in 1:dim(Bf_df)[1]) {
+    for (b in 1:dim(Bf_df)[1]){
       
       
-      if (length(stepsizes) == 1) {stepsize = stepsizes} else {stepsize = stepsizes[b]}
-      if (length(maxs) == 1) {max = maxs} else {max = maxs[b]}
+      if (length(stepsizes)==1){stepsize = stepsizes} else {stepsize = stepsizes[b]}
+      if (length(maxs)==1){max = maxs} else {max = maxs[b]}
       
       
       Ndp = num.decimals(stepsize)
       BF = as.numeric(as.character(Bf_df$Bf[b]))  
-      BType = BfClassify(BF) 
+      BType= BfClassify(BF) 
       sdtheory = as.numeric(as.character(Bf_df$sdtheory[b]))  
       sd = as.numeric(as.character(Bf_df$std.Error[b]))
       obtained = as.numeric(as.character(Bf_df$estimate[b]))
@@ -503,67 +503,57 @@ row - size must match )</p>
       RRmax = &quot;&quot;
       lastsdtheory = sdtheory
       newsdtheory = &quot;&quot;
-      while(newsdtheory &lt;= max) {
+      while(newsdtheory&lt;= max){
         newsdtheory = lastsdtheory + stepsize
-        if(colnames(Bf_df)[4] == &quot;t&quot;) {
+        if(colnames(Bf_df)[4]==&quot;t&quot;){
           dfdata=as.numeric(as.character(Bf_df$df[b]))
-          newBF = Bf(sd = sd, obtained = obtained, dfdata = dfdata, likelihood = c(&quot;t&quot;), 
-                     modeloftheory = c(&quot;normal&quot;), modeoftheory = 0, 
-                     scaleoftheory = newsdtheory, tail = tail, method = &quot;new&quot;)
+          newBF = Bf(sd=sd, obtained=obtained, dfdata=dfdata, likelihood = c(&quot;t&quot;), modeloftheory= c(&quot;normal&quot;),modeoftheory=0,scaleoftheory=newsdtheory, tail=tail, method=&quot;new&quot;)
         }
-        if(colnames(Bf_df)[4] == &quot;z&quot;) {
-          dfdata = as.numeric(as.character(Bf_df$df[b]))
-          newBF = Bf(sd = sd, obtained = obtained, likelihood = c(&quot;normal&quot;), 
-                     modeloftheory = c(&quot;normal&quot;), modeoftheory = 0, 
-                     scaleoftheory = newsdtheory, tail = tail, method = &quot;new&quot;)
+        if(colnames(Bf_df)[4]==&quot;z&quot;){
+          dfdata=as.numeric(as.character(Bf_df$df[b]))
+          newBF = Bf(sd=sd, obtained=obtained,  likelihood = c(&quot;normal&quot;), modeloftheory= c(&quot;normal&quot;),modeoftheory=0,scaleoftheory=newsdtheory, tail=tail, method=&quot;new&quot;)
         }
         
-        if (BfClassify(newBF) != BType) {
+        if (BfClassify(newBF)!= BType) {
           RRmax = format(round(lastsdtheory, Ndp))
-          break 
-        }
+          break }
         lastsdtheory = newsdtheory
       }
       
       if(RRmax == &quot;&quot; &amp; BType == &quot;h0&quot;) {RRmax = &quot;inf&quot;}  
-      if(RRmax == &quot;&quot; &amp; BType == &quot;h1&quot;) {RRmax = paste(&quot;&gt;&quot;, max, sep = &quot;&quot;)}  
-      if(RRmax == &quot;&quot; &amp; BType == &quot;ambig&quot;) {RRmax = paste(&quot;&gt;&quot;, max, sep = &quot;&quot;)}  
+      if(RRmax == &quot;&quot; &amp; BType == &quot;h1&quot;) {RRmax = paste(&quot;&gt;&quot;, max, sep=&quot;&quot;)}  
+      if(RRmax == &quot;&quot; &amp; BType == &quot;ambig&quot;) {RRmax = paste(&quot;&gt;&quot;, max, sep=&quot;&quot;)}  
       
       # get the min RRmin 
       RRmin = &quot;&quot;
       lastsdtheory = sdtheory
       newsdtheory = lastsdtheory - stepsize
       
-      while(newsdtheory &gt; 0) {
-        if(colnames(Bf_df)[4] == &quot;t&quot;) {
-          dfdata = as.numeric(as.character(Bf_df$df[b]))
-          newBF = Bf(sd = sd, obtained = obtained, dfdata = dfdata,
-                     likelihood = c(&quot;t&quot;), modeloftheory = c(&quot;normal&quot;),
-                     modeoftheory = 0,scaleoftheory = newsdtheory, 
-                     tail = tail, method = &quot;new&quot;)
+      while(newsdtheory &gt; 0){
+        if(colnames(Bf_df)[4]==&quot;t&quot;){
+          dfdata=as.numeric(as.character(Bf_df$df[b]))
+          newBF = Bf(sd=sd, obtained=obtained, dfdata=dfdata, likelihood = c(&quot;t&quot;), modeloftheory= c(&quot;normal&quot;),modeoftheory=0,scaleoftheory=newsdtheory, tail=tail, method=&quot;new&quot;)
         }
         
         
-        if(colnames(Bf_df)[4] == &quot;z&quot;) {
-          dfdata = as.numeric(as.character(Bf_df$df[b]))
-          newBF = Bf(sd = sd, obtained = obtained, likelihood = c(&quot;normal&quot;), 
-                     modeloftheory = c(&quot;normal&quot;), modeoftheory = 0, 
-                     scaleoftheory = newsdtheory, tail = tail, method = &quot;new&quot;)
+        if(colnames(Bf_df)[4]==&quot;z&quot;){
+          dfdata=as.numeric(as.character(Bf_df$df[b]))
+          newBF = Bf(sd=sd, obtained=obtained,  likelihood = c(&quot;normal&quot;), modeloftheory= c(&quot;normal&quot;),modeoftheory=0,scaleoftheory=newsdtheory, tail=tail, method=&quot;new&quot;)
         }
         
         if (is.nan(newBF)) {
           RRmin = format(round(lastsdtheory, Ndp))
           break }
-        if (BfClassify(newBF) != BType) {
+        if (BfClassify(newBF)!= BType) {
           RRmin = format(round(lastsdtheory, Ndp))
           break }
         lastsdtheory = newsdtheory
-        newsdtheory = lastsdtheory - stepsize
+        newsdtheory = lastsdtheory-stepsize
       }
       
       if(RRmin== &quot;&quot; &amp; BType == &quot;ambig&quot;) {RRmin = 0}  
-      if(RRmin== &quot;&quot; &amp; BType == &quot;h1&quot;) {RRmin = paste(&quot; 0&lt; &amp; &lt;&quot;, format(round(lastsdtheory,  Ndp), nsmall=Ndp), sep = &quot;&quot;)} 
-      if(RRmin== &quot;&quot; &amp; BType == &quot;h0&quot;) {RRmin = paste(&quot; 0&lt; &amp; &lt;&quot;, format(round(lastsdtheory,  Ndp), nsmall=Ndp), sep = &quot;&quot;)}  
+      if(RRmin== &quot;&quot; &amp; BType == &quot;h1&quot;) {RRmin = paste(&quot; 0&lt; &amp; &lt;&quot;, format(round(lastsdtheory,  Ndp), nsmall=Ndp), sep=&quot;&quot;)} 
+      if(RRmin== &quot;&quot; &amp; BType == &quot;h0&quot;) {RRmin = paste(&quot; 0&lt; &amp; &lt;&quot;, format(round(lastsdtheory,  Ndp), nsmall=Ndp), sep=&quot;&quot;)}  
       
       RRminV[b] = RRmin
       RRmaxV[b] = RRmax
@@ -571,7 +561,7 @@ row - size must match )</p>
     }
     out = cbind(Bf_df, RRminV, RRmaxV)
     
-    colnames(out)[10:11] = c(&quot;RRmin&quot;,&quot;RRmax&quot;)
+    colnames(out)[10:11]= c(&quot;RRmin&quot;, &quot;RRmax&quot;)
     
     return(out)
   }
