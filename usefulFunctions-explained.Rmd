@@ -1594,6 +1594,7 @@ summarySEwithin <- function(data=NULL, measurevar, betweenvars=NULL, withinvars=
 This function is a wrapper around summarySEwithin2, from http://www.cookbook-r.com/Graphs/Plotting_means_and_error_bars_(ggplot2)/#Helper above
 It takes a dataframe and uses `summarySEwithin2` to get the group means and variances for conditions and merges these into the original dataframe
 
+```{r}
 summarySEwithin2 <- function(data = NULL,
                              measurevar,
                              betweenvars = NULL,
@@ -1617,7 +1618,7 @@ summarySEwithin2 <- function(data = NULL,
   return(out)
 }
 
-
+```
 
 
 
