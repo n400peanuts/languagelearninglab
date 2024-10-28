@@ -228,6 +228,33 @@ addBf_ranges3 = function(Bf_df, stepsizes, maxs, method = "old") {
   
 ```
 
+## add_p_tails_match_Bf
+
+This function takes a table output by the Bfs_ranges function (or the BF_model function and for any rows where the tails are set as 1 adjusts the pvalues to be one-tailed. This means that the tails for BFs and p values are consistent)  
+
+```{r}
+add_p_tails_match_Bf <- function(Bfs.table) {
+  Bfs.table$p_tails_match_Bf = Bfs.table$p
+  Bfs.table$p_tails_match_Bf[Bfs.table$BFtail == 1 &
+                               Bfs.table$z > 0] = Bfs.table$p[Bfs.table$BFtail == 1 &
+                                                                Bfs.table$z > 0] / 2
+  Bfs.table$p_tails_match_Bf[Bfs.table$BFtail == 1 &
+                               Bfs.table$z < 0] = 1 - Bfs.table$p[Bfs.table$BFtail == 1 &
+                                                                    Bfs.table$z < 0] / 2
+  Bfs.table$p_tails_match_Bf[Bfs.table$BFtail == 1 &
+                               Bfs.table$t > 0] = Bfs.table$p[Bfs.table$BFtail == 1 &
+                                                                Bfs.table$t > 0] / 2
+  Bfs.table$p_tails_match_Bf[Bfs.table$BFtail == 1 &
+                               Bfs.table$t < 0] = 1 - Bfs.table$p[Bfs.table$BFtail == 1 &
+                                                                    Bfs.table$t < 0] / 2
+  
+  Bfs.table$p_tails_match_Bf = round(Bfs.table$p_tails_match_Bf, 3)
+  Bfs.table$p = Bfs.table$p_tails_match_Bf
+  Bfs.table$p_tails_match_Bf = NULL
+  return(Bfs.table)
+}
+
+```
 
 ## adjust_intercept_model
 
@@ -1311,41 +1338,60 @@ This function takes summary output from `addBf_ranges3` and the name of a coeffi
 Note that as this stands, if the ranges are strings (e.g. `>4.5`) they won't be rounded
 
 ```{r}
-stat_string <-function(Bfrange, coefficientName, dpbeta=2,dpse=2,dpz=2, dpp=3, dpseH1=2,dpB=3, dpRRmin=2, dpRRmax=2)
+stat_string <- function(Bfrange,
+                        coefficientName,
+                        dpbeta = 2,
+                        dpse = 2,
+                        dpz = 2,
+                        dpp = 3,
+                        dpseH1 = 2,
+                        dpB = 3,
+                        dpRRmin = 2,
+                        dpRRmax = 2)
 {
+  beta = subset(Bfrange, coefficient == coefficientName)$estimate
+  se = subset(Bfrange, coefficient == coefficientName)$std.Error
+  z = subset(Bfrange, coefficient == coefficientName)$z
+  p = subset(Bfrange, coefficient == coefficientName)$p
+  seH1 = subset(Bfrange, coefficient == coefficientName)$sdtheory
+  B = subset(Bfrange, coefficient == coefficientName)$Bf
+  RRmin = subset(Bfrange, coefficient == coefficientName)$RRmin
+  RRmax = subset(Bfrange, coefficient == coefficientName)$RRmax
   
   
-  beta = subset(Bfrange,coefficient==coefficientName)$estimate
-  se = subset(Bfrange,coefficient==coefficientName)$std.Error
-  z = subset(Bfrange,coefficient==coefficientName)$z
-  p = subset(Bfrange,coefficient==coefficientName)$p
-  seH1 = subset(Bfrange,coefficient==coefficientName)$sdtheory
-  B = subset(Bfrange,coefficient==coefficientName)$Bf
-  RRmin = subset(Bfrange,coefficient==coefficientName)$RRmin
-  RRmax = subset(Bfrange,coefficient==coefficientName)$RRmax
+  pstring = if (p < .001) {
+    ", _p_ <.001"
+  } else {
+    paste(", _p_ =", round(p, dpp))
+  }
   
-  
-  pstring = if(p<.001){", _p_ <.001"} else {paste(", _p_ =", round(p,dpp))}
-  
-  if (B>1000) {B= signif(B,digits=dpB)}
-  else {B= round(B,dpB)}  
-  outstring = paste("_&beta;_ = ", 
-                    round(beta,dpbeta), 
-                    ", _SE_ = ", 
-                    round(se,dpse), 
-                    ", _z_ = " ,
-                    round(z,dpz), 
-                    pstring ,
-                    ", _B_", 
-                    "~(0,",round(seH1,dpseH1), ")~",
-                    " = ",
-                    signif(B,digits=dpB),
-                    ", _RR_ = [", 
-                    RRmin,
-                    ",",
-                    RRmax,  
-                    "]",
-                    sep="")
+  if (B > 1000) {
+    B = signif(B, digits = dpB)
+  }
+  else {
+    B = round(B, dpB)
+  }
+  outstring = paste(
+    "_&beta;_ = ",
+    round(beta, dpbeta),
+    ", _SE_ = ",
+    round(se, dpse),
+    ", _z_ = " ,
+    round(z, dpz),
+    pstring ,
+    ", _B_",
+    "~(0,",
+    round(seH1, dpseH1),
+    ")~",
+    " = ",
+    signif(B, digits = dpB),
+    ", _RR_ = [",
+    RRmin,
+    ",",
+    RRmax,
+    "]",
+    sep = ""
+  )
   return(outstring)
 }
 ```
@@ -1355,33 +1401,48 @@ stat_string <-function(Bfrange, coefficientName, dpbeta=2,dpse=2,dpz=2, dpp=3, d
 This function is the same as stat_string except that z and p aren't reported
 
 ```{r}
-stat_string2 <-function(Bfrange, coefficientName, dpbeta=2,dpse=2,dpz=2, dpp=3, dpseH1=2,dpB=3, dpRRmin=2, dpRRmax=2)
+stat_string2 <- function(Bfrange,
+                         coefficientName,
+                         dpbeta = 2,
+                         dpse = 2,
+                         dpz = 2,
+                         dpp = 3,
+                         dpseH1 = 2,
+                         dpB = 3,
+                         dpRRmin = 2,
+                         dpRRmax = 2)
 {
-  
-  
-  beta = subset(Bfrange,coefficient==coefficientName)$estimate
-  se = subset(Bfrange,coefficient==coefficientName)$std.Error
-  B = subset(Bfrange,coefficient==coefficientName)$Bf
-  RRmin = subset(Bfrange,coefficient==coefficientName)$RRmin
-  RRmax = subset(Bfrange,coefficient==coefficientName)$RRmax
-  seH1 = subset(Bfrange,coefficient==coefficientName)$sdtheory
+  beta = subset(Bfrange, coefficient == coefficientName)$estimate
+  se = subset(Bfrange, coefficient == coefficientName)$std.Error
+  B = subset(Bfrange, coefficient == coefficientName)$Bf
+  RRmin = subset(Bfrange, coefficient == coefficientName)$RRmin
+  RRmax = subset(Bfrange, coefficient == coefficientName)$RRmax
+  seH1 = subset(Bfrange, coefficient == coefficientName)$sdtheory
   
   
   
-  if (B>1000) {B= signif(B,digits=dpB)}
-  else {B= round(B,dpB)}  
-  outstring = paste("_&beta;_ = ", 
-                    round(beta,dpbeta), 
-                    ", _B_", 
-                    "~(0,",round(seH1,dpseH1), ")~",
-                    " = ",
-                    signif(B,digits=dpB),
-                    ", _RR_ = [", 
-                    RRmin,
-                    ",",
-                    RRmax,  
-                    "]",
-                    sep="")
+  if (B > 1000) {
+    B = signif(B, digits = dpB)
+  }
+  else {
+    B = round(B, dpB)
+  }
+  outstring = paste(
+    "_&beta;_ = ",
+    round(beta, dpbeta),
+    ", _B_",
+    "~(0,",
+    round(seH1, dpseH1),
+    ")~",
+    " = ",
+    signif(B, digits = dpB),
+    ", _RR_ = [",
+    RRmin,
+    ",",
+    RRmax,
+    "]",
+    sep = ""
+  )
   return(outstring)
 }
 
