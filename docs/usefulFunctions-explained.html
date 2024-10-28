@@ -1903,6 +1903,59 @@ original dataframe, rather than into a new one</p></li>
   
 }</code></pre>
 </div>
+<div id="summarysewithin2" class="section level2">
+<h2>summarySEwithin2</h2>
+<p>This function is a wrapper around summarySEwithin2, from <a
+href="http://www.cookbook-r.com/Graphs/Plotting_means_and_error_bars_(ggplot2)/#Helper"
+class="uri">http://www.cookbook-r.com/Graphs/Plotting_means_and_error_bars_(ggplot2)/#Helper</a>
+above It takes a dataframe and uses <code>summarySEwithin2</code> to get
+the group means and variances for conditions and merges these into the
+original dataframe</p>
+<p>summarySEwithin2 &lt;- function(data = NULL, measurevar, betweenvars
+= NULL, withinvars = NULL, idvar = NULL, na.rm = FALSE, conf.interval =
+.95, .drop = TRUE) { data2 = summarySEwithin( data = data, measurevar =
+measurevar, betweenvars = betweenvars, withinvars = withinvars, idvar =
+idvar, na.rm = na.rm, conf.interval = conf.interval, .drop = .drop )
+colnames(data2)[colnames(data2) == measurevar] &lt;- “groupmean” out =
+merge(data, data2) return(out) }</p>
+</div>
+<div id="stat_string-1" class="section level1">
+<h1>stat_string</h1>
+</div>
+<div
+id="this-function-takes-summary-output-from-addbf_ranges3-and-the-name-of-a-coefficient-from-that-summary-and-formats-so-that-can-be-reported-as-a-string-in-the-main-text.-default-is-to-round-all-stats-to-2pd-apart-from-p-values-which-are-rounded-to-3dp-as-per-apa-format.-beta-se-z-p-bayes-factor-with-0h1-as-a-subscript-where-h1-is-the-predicted-of-h1-and-robustness-regions-are-all-reported"
+class="section level1">
+<h1>this function takes summary output from addBf_ranges3 and the name
+of a coefficient from that summary and formats so that can be reported
+as a string in the main text. Default is to round all stats to 2pd,
+apart from p values which are rounded to 3dp (as per APA format)). Beta,
+SE, z p, Bayes factor (with (0,H1) as a subscript, where H1 is the
+predicted of H1) and Robustness regions are all reported</h1>
+<p>#note that as this stands, if the ranges are strings (e.g. “&gt;4.5”)
+they won’t be rounded stat_string &lt;- function(Bfrange,
+coefficientName, dpbeta = 2, dpse = 2, dpz = 2, dpp = 3, dpseH1 = 2, dpB
+= 3, dpRRmin = 2, dpRRmax = 2) { beta = subset(Bfrange, coefficient ==
+coefficientName)<span class="math inline">\(estimate
+  se = subset(Bfrange, coefficient == coefficientName)\)</span>std.Error
+z = subset(Bfrange, coefficient == coefficientName)<span
+class="math inline">\(z
+  p = subset(Bfrange, coefficient == coefficientName)\)</span>p seH1 =
+subset(Bfrange, coefficient == coefficientName)<span
+class="math inline">\(sdtheory
+  B = subset(Bfrange, coefficient == coefficientName)\)</span>Bf RRmin =
+subset(Bfrange, coefficient == coefficientName)<span
+class="math inline">\(RRmin
+  RRmax = subset(Bfrange, coefficient ==
+coefficientName)\)</span>RRmax</p>
+<p>pstring = if (p &lt; .001) { “, <em>p</em> &lt;.001” } else {
+paste(“, <em>p</em> =”, round(p, dpp)) }</p>
+<p>if (B &gt; 1000) { B = signif(B, digits = dpB) } else { B = round(B,
+dpB) } outstring = paste( “<em>β</em> =”, round(beta, dpbeta), “,
+<em>SE</em> =”, round(se, dpse), “, <em>z</em> =” , round(z, dpz),
+pstring , “, <em>B</em>”, “~(0,”, round(seH1, dpseH1), “)~”, ” = “,
+signif(B, digits = dpB),”, <em>RR</em> = [“, RRmin,”,“, RRmax,”]“, sep
+=”” ) return(outstring) }</p>
+</div>
 
 
 
