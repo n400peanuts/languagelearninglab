@@ -13,7 +13,7 @@
 
 <title>Functions frequently used</title>
 
-<script src="site_libs/header-attrs-2.18/header-attrs.js"></script>
+<script src="site_libs/header-attrs-2.28/header-attrs.js"></script>
 <script src="site_libs/jquery-3.6.0/jquery-3.6.0.min.js"></script>
 <meta name="viewport" content="width=device-width, initial-scale=1" />
 <link href="site_libs/bootstrap-3.3.5/css/cosmo.min.css" rel="stylesheet" />
@@ -29,7 +29,7 @@
        h6 {font-size: 12px;}
        code {color: inherit; background-color: rgba(0, 0, 0, 0.04);}
        pre:not([class]) { background-color: white }</style>
-<script src="site_libs/jqueryui-1.11.4/jquery-ui.min.js"></script>
+<script src="site_libs/jqueryui-1.13.2/jquery-ui.min.js"></script>
 <link href="site_libs/tocify-1.9.1/jquery.tocify.css" rel="stylesheet" />
 <script src="site_libs/tocify-1.9.1/jquery.tocify.js"></script>
 <script src="site_libs/navigation-1.1/tabsets.js"></script>
@@ -566,6 +566,33 @@ row - size must match )</p>
     return(out)
   }
 }  </code></pre>
+</div>
+<div id="add_p_tails_match_bf" class="section level2">
+<h2>add_p_tails_match_Bf</h2>
+<p>This function takes a table output by the Bfs_ranges function (or the
+BF_model function and for any rows where the tails are set as 1 adjusts
+the pvalues to be one-tailed. This means that the tails for BFs and p
+values are consistent)</p>
+<pre class="r"><code>add_p_tails_match_Bf &lt;- function(Bfs.table) {
+  Bfs.table$p_tails_match_Bf = Bfs.table$p
+  Bfs.table$p_tails_match_Bf[Bfs.table$BFtail == 1 &amp;
+                               Bfs.table$z &gt; 0] = Bfs.table$p[Bfs.table$BFtail == 1 &amp;
+                                                                Bfs.table$z &gt; 0] / 2
+  Bfs.table$p_tails_match_Bf[Bfs.table$BFtail == 1 &amp;
+                               Bfs.table$z &lt; 0] = 1 - Bfs.table$p[Bfs.table$BFtail == 1 &amp;
+                                                                    Bfs.table$z &lt; 0] / 2
+  Bfs.table$p_tails_match_Bf[Bfs.table$BFtail == 1 &amp;
+                               Bfs.table$t &gt; 0] = Bfs.table$p[Bfs.table$BFtail == 1 &amp;
+                                                                Bfs.table$t &gt; 0] / 2
+  Bfs.table$p_tails_match_Bf[Bfs.table$BFtail == 1 &amp;
+                               Bfs.table$t &lt; 0] = 1 - Bfs.table$p[Bfs.table$BFtail == 1 &amp;
+                                                                    Bfs.table$t &lt; 0] / 2
+  
+  Bfs.table$p_tails_match_Bf = round(Bfs.table$p_tails_match_Bf, 3)
+  Bfs.table$p = Bfs.table$p_tails_match_Bf
+  Bfs.table$p_tails_match_Bf = NULL
+  return(Bfs.table)
+}</code></pre>
 </div>
 <div id="adjust_intercept_model" class="section level2">
 <h2>adjust_intercept_model</h2>
@@ -1617,6 +1644,122 @@ appended (e.g., “variable1” will become “variable1.ct”).</p>
   }
   
   return(x)
+}</code></pre>
+</div>
+<div id="stat_string" class="section level2">
+<h2>stat_string</h2>
+<p>This function takes summary output from <code>addBf_ranges3</code>
+and the name of a coefficient from that summary and formats so that can
+be reported as a string in the main text. Default is to round all stats
+to 2pd, apart from p values which are rounded to 3dp (as per APA
+format)). Beta, SE, z p, Bayes factor (with (0,H1) as a subscript, where
+H1 is the predicted of H1) and Robustness regions are all reported.</p>
+<p>Note that as this stands, if the ranges are strings
+(e.g. <code>&gt;4.5</code>) they won’t be rounded</p>
+<pre class="r"><code>stat_string &lt;- function(Bfrange,
+                        coefficientName,
+                        dpbeta = 2,
+                        dpse = 2,
+                        dpz = 2,
+                        dpp = 3,
+                        dpseH1 = 2,
+                        dpB = 3,
+                        dpRRmin = 2,
+                        dpRRmax = 2)
+{
+  beta = subset(Bfrange, coefficient == coefficientName)$estimate
+  se = subset(Bfrange, coefficient == coefficientName)$std.Error
+  z = subset(Bfrange, coefficient == coefficientName)$z
+  p = subset(Bfrange, coefficient == coefficientName)$p
+  seH1 = subset(Bfrange, coefficient == coefficientName)$sdtheory
+  B = subset(Bfrange, coefficient == coefficientName)$Bf
+  RRmin = subset(Bfrange, coefficient == coefficientName)$RRmin
+  RRmax = subset(Bfrange, coefficient == coefficientName)$RRmax
+  
+  
+  pstring = if (p &lt; .001) {
+    &quot;, _p_ &lt;.001&quot;
+  } else {
+    paste(&quot;, _p_ =&quot;, round(p, dpp))
+  }
+  
+  if (B &gt; 1000) {
+    B = signif(B, digits = dpB)
+  }
+  else {
+    B = round(B, dpB)
+  }
+  outstring = paste(
+    &quot;_&amp;beta;_ = &quot;,
+    round(beta, dpbeta),
+    &quot;, _SE_ = &quot;,
+    round(se, dpse),
+    &quot;, _z_ = &quot; ,
+    round(z, dpz),
+    pstring ,
+    &quot;, _B_&quot;,
+    &quot;~(0,&quot;,
+    round(seH1, dpseH1),
+    &quot;)~&quot;,
+    &quot; = &quot;,
+    signif(B, digits = dpB),
+    &quot;, _RR_ = [&quot;,
+    RRmin,
+    &quot;,&quot;,
+    RRmax,
+    &quot;]&quot;,
+    sep = &quot;&quot;
+  )
+  return(outstring)
+}</code></pre>
+</div>
+<div id="stat_string2" class="section level2">
+<h2>stat_string2</h2>
+<p>This function is the same as stat_string except that z and p aren’t
+reported</p>
+<pre class="r"><code>stat_string2 &lt;- function(Bfrange,
+                         coefficientName,
+                         dpbeta = 2,
+                         dpse = 2,
+                         dpz = 2,
+                         dpp = 3,
+                         dpseH1 = 2,
+                         dpB = 3,
+                         dpRRmin = 2,
+                         dpRRmax = 2)
+{
+  beta = subset(Bfrange, coefficient == coefficientName)$estimate
+  se = subset(Bfrange, coefficient == coefficientName)$std.Error
+  B = subset(Bfrange, coefficient == coefficientName)$Bf
+  RRmin = subset(Bfrange, coefficient == coefficientName)$RRmin
+  RRmax = subset(Bfrange, coefficient == coefficientName)$RRmax
+  seH1 = subset(Bfrange, coefficient == coefficientName)$sdtheory
+  
+  
+  
+  if (B &gt; 1000) {
+    B = signif(B, digits = dpB)
+  }
+  else {
+    B = round(B, dpB)
+  }
+  outstring = paste(
+    &quot;_&amp;beta;_ = &quot;,
+    round(beta, dpbeta),
+    &quot;, _B_&quot;,
+    &quot;~(0,&quot;,
+    round(seH1, dpseH1),
+    &quot;)~&quot;,
+    &quot; = &quot;,
+    signif(B, digits = dpB),
+    &quot;, _RR_ = [&quot;,
+    RRmin,
+    &quot;,&quot;,
+    RRmax,
+    &quot;]&quot;,
+    sep = &quot;&quot;
+  )
+  return(outstring)
 }</code></pre>
 </div>
 <div id="summaryse" class="section level2">
