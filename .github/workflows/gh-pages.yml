@@ -3,9 +3,9 @@ name: Build and Deploy R Markdown Site to GitHub Pages
 # Trigger on pushes to your default branch (change "main" if necessary)
 on:
   push:
-    branches: [ main ]
+    branches: [ master ]
   pull_request:
-    branches: [ main ]
+    branches: [ master ]
 
 jobs:
   build-deploy:
