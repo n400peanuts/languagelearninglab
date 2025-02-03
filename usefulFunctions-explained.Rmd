@@ -3,7 +3,8 @@ title: "Functions frequently used"
 output:
   html_document:
     toc: true
-    toc_float: true
+    toc_float: false
+    toc_depth: 3
 ---
 
 This is an R Markdown document explaining all the functions used by the language and learning lab. 
@@ -661,7 +662,7 @@ Bf_set <-function(names_list, meandiff_list, sd_list,  h1_list, tail_list)
 
 lower_ci.R and upper_ci.R are functions made available publicly in this [Rcommunity post](https://community.rstudio.com/t/computing-confidence-intervals-with-dplyr/31868)
 
-Example of how to use it::
+### Example:
 
 ```{r, eval=FALSE}
 
@@ -745,7 +746,7 @@ Arguments:
 
 - myGorillaemail: the email that I use to log into Gorilla
 
-Example of how to use the function:
+### Example:
 ```{r download_from_Gorilla example, eval=F}
 output <- c("C:/Users/...")
 previewDownloadFile <- read.csv("data.csv") #this is a preview file of the eyetracker zone that contains in the "Response" column my links. One for each trial.
