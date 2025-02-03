@@ -27,6 +27,11 @@ jobs:
       - name: Build Site
         run: |
           Rscript -e "rmarkdown::render_site()"
+          mkdir -p docs
+          cp -r _site/* docs/
+
+      - name: Verify build output
+        run: ls -R
 
       - name: Create .nojekyll file
         run: touch docs/.nojekyll
