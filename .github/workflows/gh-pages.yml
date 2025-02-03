@@ -26,7 +26,7 @@ jobs:
 
       - name: Build Site
         run: |
-          Rscript -e "rmarkdown::render_site(output_dir = 'docs')"
+          Rscript -e "rmarkdown::render_site()"
 
       - name: Create .nojekyll file
         run: touch docs/.nojekyll
@@ -35,4 +35,5 @@ jobs:
         uses: peaceiris/actions-gh-pages@v3
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}
+          publish_branch: gh-pages
           publish_dir: ./docs
