@@ -25,10 +25,7 @@ jobs:
           Rscript -e "install.packages(c('rmarkdown', 'knitr'), repos = 'https://cloud.r-project.org')"
 
       - name: Build Site
-        run: |
-          Rscript -e "rmarkdown::render_site()"
-          mkdir -p docs
-          cp -r _site/* docs/
+        run: Rscript -e "rmarkdown::render_site()"
 
       - name: Verify build output
         run: ls -R
